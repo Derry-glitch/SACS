@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\SACS.Application\SACS.Application.csproj" />
     <ProjectReference Include="..\..\src\SACS.Domain\SACS.Domain.csproj" />
     <ProjectReference Include="..\..\src\SACS.Persistence\SACS.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\SACS.Infrastructure\SACS.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

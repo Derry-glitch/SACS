@@ -13,6 +13,8 @@ using SACS.Persistence;
 using SACS.Infrastructure;
 using SACS.API.Middleware;
 using SACS.API.Services;
+using SACS.Application;
+using SACS.Persistence.Contexts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,6 +65,7 @@ builder.Services.AddScoped<ICurrentUserService, WebCurrentUserService>();
 // Register SACS Core Services (Clean Architecture layers)
 builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddApplicationServices();
 
 // Configure JWT Authentication
 var secretKey = builder.Configuration["Jwt:Secret"] ?? "SuperSecretKeyForSacsDevelopmentNeedsToBeAtLeast32BytesLong!";
@@ -98,6 +101,13 @@ builder.Services.AddHangfire(config => config
         ?? "Server=(localdb)\\mssqllocaldb;Database=SacsDb;Trusted_Connection=True;MultipleActiveResultSets=true"));
 
 var app = builder.Build();
+
+// Run DB Seeding and Migrations
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await DatabaseSeeder.SeedAsync(context);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

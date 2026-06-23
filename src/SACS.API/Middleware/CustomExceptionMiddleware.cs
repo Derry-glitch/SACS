@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using FluentValidation;
+using Microsoft.IdentityModel.Tokens;
 
 namespace SACS.API.Middleware;
 
@@ -44,6 +47,8 @@ public class CustomExceptionMiddleware
         
         var statusCode = exception switch
         {
+            ValidationException => HttpStatusCode.BadRequest,
+            SecurityTokenException => HttpStatusCode.Unauthorized,
             KeyNotFoundException => HttpStatusCode.NotFound,
             ArgumentException or InvalidOperationException => HttpStatusCode.BadRequest,
             UnauthorizedAccessException => HttpStatusCode.Unauthorized,
@@ -52,6 +57,17 @@ public class CustomExceptionMiddleware
 
         context.Response.StatusCode = (int)statusCode;
 
+        object? errors = null;
+        if (exception is ValidationException valEx)
+        {
+            errors = valEx.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray()
+                );
+        }
+
         var traceId = context.TraceIdentifier;
         var response = new
         {
@@ -59,7 +75,7 @@ public class CustomExceptionMiddleware
             Title = exception.GetType().Name,
             Detail = exception.Message,
             TraceId = traceId,
-            Errors = _env.IsDevelopment() ? exception.StackTrace : null
+            Errors = errors ?? (_env.IsDevelopment() ? exception.StackTrace : null)
         };
 
         var json = JsonSerializer.Serialize(response);

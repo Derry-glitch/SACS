@@ -42,6 +42,7 @@ public static class DependencyInjection
 
         // Register JWT Services
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
 
         return services;
     }
