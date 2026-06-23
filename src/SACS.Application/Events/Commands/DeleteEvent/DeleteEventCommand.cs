@@ -5,25 +5,25 @@ using MediatR;
 using SACS.Domain.Entities;
 using SACS.Domain.Repositories;
 
-namespace SACS.Application.Events.Commands.DeleteAssignment;
+namespace SACS.Application.Events.Commands.DeleteEvent;
 
-public record DeleteAssignmentCommand(long Id) : IRequest;
+public record DeleteEventCommand(long Id) : IRequest;
 
-public class DeleteAssignmentCommandHandler : IRequestHandler<DeleteAssignmentCommand>
+public class DeleteEventCommandHandler : IRequestHandler<DeleteEventCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
 
-    public DeleteAssignmentCommandHandler(IUnitOfWork unitOfWork)
+    public DeleteEventCommandHandler(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
     }
 
-    public async Task Handle(DeleteAssignmentCommand request, CancellationToken cancellationToken)
+    public async Task Handle(DeleteEventCommand request, CancellationToken cancellationToken)
     {
         var existingEvent = await _unitOfWork.Repository<AcademicEvent>().GetByIdAsync(request.Id, cancellationToken);
-        if (existingEvent == null || existingEvent.EventType != "Assignment")
+        if (existingEvent == null)
         {
-            throw new KeyNotFoundException("Assignment not found.");
+            throw new KeyNotFoundException("Academic event not found.");
         }
 
         _unitOfWork.Repository<AcademicEvent>().Remove(existingEvent);

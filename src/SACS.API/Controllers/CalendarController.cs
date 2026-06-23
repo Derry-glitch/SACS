@@ -21,10 +21,31 @@ public class CalendarController : ControllerBase
         _sender = sender;
     }
 
-    [HttpGet("view")]
-    public async Task<ActionResult<IEnumerable<CalendarEventDto>>> GetCalendar([FromQuery] string viewType, [FromQuery] DateTime? date)
+    [HttpGet("day")]
+    public async Task<ActionResult<IEnumerable<CalendarEventDto>>> GetDailyCalendar([FromQuery] DateTime? date)
     {
-        var result = await _sender.Send(new GetCalendarQuery(viewType ?? "upcoming", date ?? DateTime.UtcNow));
+        var result = await _sender.Send(new GetDailyCalendarQuery(date));
+        return Ok(result);
+    }
+
+    [HttpGet("week")]
+    public async Task<ActionResult<IEnumerable<CalendarEventDto>>> GetWeeklyCalendar([FromQuery] DateTime? date)
+    {
+        var result = await _sender.Send(new GetWeeklyCalendarQuery(date));
+        return Ok(result);
+    }
+
+    [HttpGet("month")]
+    public async Task<ActionResult<IEnumerable<CalendarEventDto>>> GetMonthlyCalendar([FromQuery] DateTime? date)
+    {
+        var result = await _sender.Send(new GetMonthlyCalendarQuery(date));
+        return Ok(result);
+    }
+
+    [HttpGet("upcoming")]
+    public async Task<ActionResult<IEnumerable<CalendarEventDto>>> GetUpcomingCalendar()
+    {
+        var result = await _sender.Send(new GetUpcomingCalendarQuery());
         return Ok(result);
     }
 }

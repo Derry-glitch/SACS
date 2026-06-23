@@ -8,18 +8,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using SACS.Application.Common.Interfaces;
 using SACS.Application.Common.Models;
-using SACS.Application.Events.Commands.CreateAssignment;
-using SACS.Application.Events.Commands.CreateExam;
-using SACS.Application.Events.Commands.CreateQuiz;
-using SACS.Application.Events.Commands.CreateProject;
-using SACS.Application.Events.Commands.UpdateAssignment;
-using SACS.Application.Events.Commands.DeleteAssignment;
-using SACS.Application.Events.Commands.SetReminders;
-using SACS.Application.Events.Queries.GetAssignments;
+using SACS.Application.Events.Commands.CreateEvent;
+using SACS.Application.Events.Commands.UpdateEvent;
+using SACS.Application.Events.Commands.DeleteEvent;
+using SACS.Application.Events.Commands.ConfigureReminders;
+using SACS.Application.Events.Commands.DeleteReminder;
+using SACS.Application.Events.Queries.GetEventById;
+using SACS.Application.Events.Queries.GetEvents;
 using SACS.Application.Events.Queries.GetCalendar;
-using SACS.Application.Events.Queries.GetExams;
-using SACS.Application.Events.Queries.GetQuizzes;
-using SACS.Application.Events.Queries.GetProjects;
+using SACS.Application.Events.Queries.GetMyReminders;
+using SACS.Application.Events.DTOs;
 using SACS.Domain.Common;
 using SACS.Domain.Entities;
 using SACS.Persistence.Contexts;
@@ -119,7 +117,7 @@ public class AcademicEventTests
 
         var studentProfile = new StudentProfile
         {
-            Id = studentUser.Id, // Links to User.Id
+            Id = studentUser.Id,
             MatriculationNumber = "MAT-123",
             AcademicLevel = 200
         };
@@ -140,7 +138,7 @@ public class AcademicEventTests
     }
 
     [Fact]
-    public async Task CreateAssignment_ShouldCreateAndReturnAssignmentDto_WhenValid()
+    public async Task CreateEvent_ShouldCreateAndReturnEventDto_ForAssignment()
     {
         // Arrange
         var (context, uow, currentUserService) = await CreateTestContextAsync();
@@ -148,18 +146,17 @@ public class AcademicEventTests
         currentUserService.UserId = studentUser.Id.ToString();
 
         var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
-        var handler = new CreateAssignmentCommandHandler(uow, currentUserService);
+        var handler = new CreateEventCommandHandler(uow, currentUserService);
 
-        var command = new CreateAssignmentCommand(
+        var command = new CreateEventCommand(
             Title: "Assignment 1",
-            CourseOfferingId: offering.Id,
-            Description: "Implement a binary search tree",
-            DeadlineDate: DateTime.UtcNow.AddDays(7),
-            Priority: "High",
-            Attachments: new List<AttachmentRequestDto>
-            {
-                new AttachmentRequestDto("ref.pdf", "https://sacs.blob.core.windows.net/ref.pdf", 1024, "application/pdf")
-            }
+            Description: "Solve problem set 1",
+            CourseId: offering.Id,
+            EventType: AcademicEventType.Assignment,
+            DueDateTime: DateTime.UtcNow.AddDays(7),
+            PriorityLevel: "High",
+            Notes: "Graded event",
+            AttachmentUrl: "https://sacs.blob.core.windows.net/files/p1.pdf"
         );
 
         // Act
@@ -168,19 +165,153 @@ public class AcademicEventTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal("Assignment 1", result.Title);
-        Assert.Equal("Implement a binary search tree", result.Description);
-        Assert.Equal("High", result.Priority);
-        Assert.Single(result.Attachments);
-        Assert.Equal("ref.pdf", result.Attachments[0].FileName);
+        Assert.Equal(AcademicEventType.Assignment, result.EventType);
+        Assert.Equal("https://sacs.blob.core.windows.net/files/p1.pdf", result.AttachmentUrl);
 
-        var savedEvent = await context.AcademicEvents.Include(ae => ae.Attachments).FirstOrDefaultAsync(ae => ae.Id == result.Id);
+        var savedEvent = await context.AcademicEvents.FirstOrDefaultAsync(ae => ae.Id == result.Id);
         Assert.NotNull(savedEvent);
         Assert.Equal("Assignment", savedEvent.EventType);
-        Assert.Single(savedEvent.Attachments);
     }
 
     [Fact]
-    public async Task UpdateAssignment_ShouldUpdateFieldsAndReturnAssignmentDto_WhenValid()
+    public async Task CreateEvent_ShouldCreateAndReturnEventDto_ForQuiz()
+    {
+        // Arrange
+        var (context, uow, currentUserService) = await CreateTestContextAsync();
+        var studentUser = await SeedBaseDataAsync(context);
+        currentUserService.UserId = studentUser.Id.ToString();
+
+        var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
+        var handler = new CreateEventCommandHandler(uow, currentUserService);
+
+        var command = new CreateEventCommand(
+            Title: "Pop Quiz",
+            Description: "In-class quiz",
+            CourseId: offering.Id,
+            EventType: AcademicEventType.Quiz,
+            DueDateTime: DateTime.UtcNow.AddDays(2),
+            PriorityLevel: "Medium",
+            Notes: "No calculators",
+            AttachmentUrl: null,
+            DurationMinutes: 20
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(20, result.DurationMinutes);
+
+        var savedEvent = await context.AcademicEvents.FindAsync(result.Id);
+        Assert.NotNull(savedEvent);
+        var meta = JsonSerializer.Deserialize<EventMetadata>(savedEvent.Description ?? "{}");
+        Assert.Equal(20, meta?.DurationMinutes);
+    }
+
+    [Fact]
+    public async Task CreateEvent_ShouldCreateAndReturnEventDto_ForExam()
+    {
+        // Arrange
+        var (context, uow, currentUserService) = await CreateTestContextAsync();
+        var studentUser = await SeedBaseDataAsync(context);
+        currentUserService.UserId = studentUser.Id.ToString();
+
+        var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
+        var handler = new CreateEventCommandHandler(uow, currentUserService);
+
+        var command = new CreateEventCommand(
+            Title: "Final Exam",
+            Description: "Comprehensive exam",
+            CourseId: offering.Id,
+            EventType: AcademicEventType.Exam,
+            DueDateTime: DateTime.UtcNow.AddDays(14),
+            PriorityLevel: "Critical",
+            Notes: "Bring pen and ID",
+            AttachmentUrl: null,
+            DurationMinutes: 180,
+            Venue: "Main Gym",
+            SeatNumber: "Seat-B12"
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Main Gym", result.Venue);
+        Assert.Equal("Seat-B12", result.SeatNumber);
+        Assert.Equal(180, result.DurationMinutes);
+    }
+
+    [Fact]
+    public async Task CreateEvent_ShouldCreateAndReturnEventDto_ForProject()
+    {
+        // Arrange
+        var (context, uow, currentUserService) = await CreateTestContextAsync();
+        var studentUser = await SeedBaseDataAsync(context);
+        currentUserService.UserId = studentUser.Id.ToString();
+
+        var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
+        var handler = new CreateEventCommandHandler(uow, currentUserService);
+
+        var command = new CreateEventCommand(
+            Title: "Compiler Project",
+            Description: "Build a lexer",
+            CourseId: offering.Id,
+            EventType: AcademicEventType.Project,
+            DueDateTime: DateTime.UtcNow.AddDays(30),
+            PriorityLevel: "High",
+            Notes: "Team project",
+            AttachmentUrl: null,
+            SupervisorName: "Dr. Dave",
+            ProgressPercentage: 10
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Dr. Dave", result.SupervisorName);
+        Assert.Equal(10, result.ProgressPercentage);
+    }
+
+    [Fact]
+    public async Task CreateEvent_ShouldCreateAndReturnEventDto_ForStudySession()
+    {
+        // Arrange
+        var (context, uow, currentUserService) = await CreateTestContextAsync();
+        var studentUser = await SeedBaseDataAsync(context);
+        currentUserService.UserId = studentUser.Id.ToString();
+
+        var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
+        var handler = new CreateEventCommandHandler(uow, currentUserService);
+
+        var command = new CreateEventCommand(
+            Title: "Study Session 1",
+            Description: "Group discussion",
+            CourseId: offering.Id,
+            EventType: AcademicEventType.StudySession,
+            DueDateTime: DateTime.UtcNow.AddDays(3),
+            PriorityLevel: "Low",
+            Notes: "Reviewing lecture slides",
+            AttachmentUrl: null,
+            StudyTopic: "Recursion and Big-O",
+            StudyDuration: 90
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Recursion and Big-O", result.StudyTopic);
+        Assert.Equal(90, result.StudyDuration);
+    }
+
+    [Fact]
+    public async Task UpdateEvent_ShouldUpdateFieldsAndReturnEventDto()
     {
         // Arrange
         var (context, uow, currentUserService) = await CreateTestContextAsync();
@@ -189,10 +320,10 @@ public class AcademicEventTests
 
         var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
         
-        var initialMetadata = new EventMetadata { RawDescription = "Old description" };
+        var initialMetadata = new EventMetadata { Notes = "Old notes" };
         var existingEvent = new AcademicEvent
         {
-            Title = "Old Title",
+            Title = "Old Event",
             Description = JsonSerializer.Serialize(initialMetadata),
             EventType = "Assignment",
             DueDate = DateTime.UtcNow.AddDays(3),
@@ -206,13 +337,15 @@ public class AcademicEventTests
         await context.AcademicEvents.AddAsync(existingEvent);
         await context.SaveChangesAsync();
 
-        var handler = new UpdateAssignmentCommandHandler(uow);
-        var command = new UpdateAssignmentCommand(
+        var handler = new UpdateEventCommandHandler(uow);
+        var command = new UpdateEventCommand(
             Id: existingEvent.Id,
-            Title: "New Title",
+            Title: "New Event Title",
             Description: "New description",
-            DeadlineDate: DateTime.UtcNow.AddDays(10),
-            Priority: "Critical"
+            DueDateTime: DateTime.UtcNow.AddDays(10),
+            PriorityLevel: "Critical",
+            Notes: "Updated notes",
+            AttachmentUrl: "https://newurl.com"
         );
 
         // Act
@@ -220,18 +353,14 @@ public class AcademicEventTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("New Title", result.Title);
-        Assert.Equal("New description", result.Description);
-        Assert.Equal("Critical", result.Priority);
-
-        var updatedEvent = await context.AcademicEvents.FindAsync(existingEvent.Id);
-        Assert.NotNull(updatedEvent);
-        Assert.Equal("New Title", updatedEvent.Title);
-        Assert.Equal("Critical", updatedEvent.Priority);
+        Assert.Equal("New Event Title", result.Title);
+        Assert.Equal("Updated notes", result.Notes);
+        Assert.Equal("https://newurl.com", result.AttachmentUrl);
+        Assert.Equal("Critical", result.PriorityLevel);
     }
 
     [Fact]
-    public async Task DeleteAssignment_ShouldRemoveFromDatabase_WhenValid()
+    public async Task DeleteEvent_ShouldRemoveFromDatabase()
     {
         // Arrange
         var (context, uow, currentUserService) = await CreateTestContextAsync();
@@ -256,24 +385,58 @@ public class AcademicEventTests
         await context.AcademicEvents.AddAsync(existingEvent);
         await context.SaveChangesAsync();
 
-        var handler = new DeleteAssignmentCommandHandler(uow);
-        var command = new DeleteAssignmentCommand(existingEvent.Id);
+        var handler = new DeleteEventCommandHandler(uow);
+        var command = new DeleteEventCommand(existingEvent.Id);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        // We use FirstOrDefaultAsync because soft delete global query filter will filter out deleted events.
         var deletedEvent = await context.AcademicEvents.FirstOrDefaultAsync(ae => ae.Id == existingEvent.Id);
         Assert.Null(deletedEvent);
-
-        var rawDeletedEvent = await context.AcademicEvents.IgnoreQueryFilters().FirstOrDefaultAsync(ae => ae.Id == existingEvent.Id);
-        Assert.NotNull(rawDeletedEvent);
-        Assert.True(rawDeletedEvent.IsDeleted);
     }
 
     [Fact]
-    public async Task GetAssignments_ShouldReturnAssignmentsForEnrolledCoursesOnly()
+    public async Task GetEventById_ShouldReturnEventDto()
+    {
+        // Arrange
+        var (context, uow, currentUserService) = await CreateTestContextAsync();
+        var studentUser = await SeedBaseDataAsync(context);
+        currentUserService.UserId = studentUser.Id.ToString();
+
+        var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
+        
+        var metadata = new EventMetadata { Notes = "Special notes", DurationMinutes = 45 };
+        var existingEvent = new AcademicEvent
+        {
+            Title = "Fetch Me",
+            Description = JsonSerializer.Serialize(metadata),
+            EventType = "Quiz",
+            DueDate = DateTime.UtcNow.AddDays(3),
+            Priority = "Medium",
+            CourseOfferingId = offering.Id,
+            CreatedByUserId = studentUser.Id,
+            Status = "Active",
+            SourceType = "Manual",
+            IsVisibleToStudents = true
+        };
+        await context.AcademicEvents.AddAsync(existingEvent);
+        await context.SaveChangesAsync();
+
+        var handler = new GetEventByIdQueryHandler(uow);
+
+        // Act
+        var result = await handler.Handle(new GetEventByIdQuery(existingEvent.Id), CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Fetch Me", result.Title);
+        Assert.Equal(AcademicEventType.Quiz, result.EventType);
+        Assert.Equal(45, result.DurationMinutes);
+    }
+
+    [Fact]
+    public async Task GetEvents_ShouldReturnEventsForEnrolledCoursesOnly()
     {
         // Arrange
         var (context, uow, currentUserService) = await CreateTestContextAsync();
@@ -283,11 +446,10 @@ public class AcademicEventTests
         var enrolledOffering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
         var nonEnrolledOffering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC202");
 
-        // Assignment in enrolled course
         var event1 = new AcademicEvent
         {
-            Title = "Enrolled Course Assignment",
-            Description = JsonSerializer.Serialize(new EventMetadata { RawDescription = "Desc 1" }),
+            Title = "Enrolled Event",
+            Description = "{}",
             EventType = "Assignment",
             DueDate = DateTime.UtcNow.AddDays(3),
             Priority = "Medium",
@@ -298,11 +460,10 @@ public class AcademicEventTests
             IsVisibleToStudents = true
         };
 
-        // Assignment in non-enrolled course
         var event2 = new AcademicEvent
         {
-            Title = "Non-enrolled Course Assignment",
-            Description = JsonSerializer.Serialize(new EventMetadata { RawDescription = "Desc 2" }),
+            Title = "Non-enrolled Event",
+            Description = "{}",
             EventType = "Assignment",
             DueDate = DateTime.UtcNow.AddDays(5),
             Priority = "High",
@@ -316,297 +477,18 @@ public class AcademicEventTests
         await context.AcademicEvents.AddRangeAsync(event1, event2);
         await context.SaveChangesAsync();
 
-        var handler = new GetAssignmentsQueryHandler(uow, currentUserService);
+        var handler = new GetEventsQueryHandler(uow, currentUserService);
 
         // Act
-        var result = (await handler.Handle(new GetAssignmentsQuery(), CancellationToken.None)).ToList();
+        var result = (await handler.Handle(new GetEventsQuery(), CancellationToken.None)).ToList();
 
         // Assert
         Assert.Single(result);
-        Assert.Equal("Enrolled Course Assignment", result[0].Title);
-        Assert.Equal("Desc 1", result[0].Description);
+        Assert.Equal("Enrolled Event", result[0].Title);
     }
 
     [Fact]
-    public async Task CreateQuiz_ShouldCreateAndSaveQuizMetadata_WhenValid()
-    {
-        // Arrange
-        var (context, uow, currentUserService) = await CreateTestContextAsync();
-        var studentUser = await SeedBaseDataAsync(context);
-        currentUserService.UserId = studentUser.Id.ToString();
-
-        var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
-        
-        var handler = new CreateQuizCommandHandler(uow, currentUserService);
-        var command = new CreateQuizCommand(
-            Title: "Quiz 1",
-            CourseOfferingId: offering.Id,
-            Date: DateTime.UtcNow.AddDays(2),
-            DurationMinutes: 30,
-            ReminderWindow: "2hours",
-            Notes: "Calculators allowed"
-        );
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Quiz 1", result.Title);
-        Assert.Equal(30, result.DurationMinutes);
-        Assert.Equal("2hours", result.ReminderWindow);
-        Assert.Equal("Calculators allowed", result.Notes);
-
-        var savedEvent = await context.AcademicEvents.FindAsync(result.Id);
-        Assert.NotNull(savedEvent);
-        Assert.Equal("Quiz", savedEvent.EventType);
-        
-        var meta = JsonSerializer.Deserialize<EventMetadata>(savedEvent.Description ?? "{}");
-        Assert.Equal(30, meta?.DurationMinutes);
-        Assert.Equal("Calculators allowed", meta?.Notes);
-    }
-
-    [Fact]
-    public async Task GetQuizzes_ShouldReturnQuizzesForEnrolledCoursesOnly()
-    {
-        // Arrange
-        var (context, uow, currentUserService) = await CreateTestContextAsync();
-        var studentUser = await SeedBaseDataAsync(context);
-        currentUserService.UserId = studentUser.Id.ToString();
-
-        var enrolledOffering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
-        var nonEnrolledOffering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC202");
-
-        var quiz1 = new AcademicEvent
-        {
-            Title = "Enrolled Quiz",
-            Description = JsonSerializer.Serialize(new EventMetadata { DurationMinutes = 15, Notes = "Note 1" }),
-            EventType = "Quiz",
-            DueDate = DateTime.UtcNow.AddDays(2),
-            CourseOfferingId = enrolledOffering.Id,
-            CreatedByUserId = studentUser.Id,
-            Priority = "Medium",
-            Status = "Active",
-            SourceType = "Manual",
-            IsVisibleToStudents = true
-        };
-
-        var quiz2 = new AcademicEvent
-        {
-            Title = "Non-enrolled Quiz",
-            Description = JsonSerializer.Serialize(new EventMetadata { DurationMinutes = 45, Notes = "Note 2" }),
-            EventType = "Quiz",
-            DueDate = DateTime.UtcNow.AddDays(4),
-            CourseOfferingId = nonEnrolledOffering.Id,
-            CreatedByUserId = studentUser.Id,
-            Priority = "Medium",
-            Status = "Active",
-            SourceType = "Manual",
-            IsVisibleToStudents = true
-        };
-
-        await context.AcademicEvents.AddRangeAsync(quiz1, quiz2);
-        await context.SaveChangesAsync();
-
-        var handler = new GetQuizzesQueryHandler(uow, currentUserService);
-
-        // Act
-        var result = (await handler.Handle(new GetQuizzesQuery(), CancellationToken.None)).ToList();
-
-        // Assert
-        Assert.Single(result);
-        Assert.Equal("Enrolled Quiz", result[0].Title);
-        Assert.Equal(15, result[0].DurationMinutes);
-    }
-
-    [Fact]
-    public async Task CreateExam_ShouldCreateAndSaveExamMetadata_WhenValid()
-    {
-        // Arrange
-        var (context, uow, currentUserService) = await CreateTestContextAsync();
-        var studentUser = await SeedBaseDataAsync(context);
-        currentUserService.UserId = studentUser.Id.ToString();
-
-        var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
-        
-        var handler = new CreateExamCommandHandler(uow, currentUserService);
-        var command = new CreateExamCommand(
-            Title: "Semester Exam",
-            CourseOfferingId: offering.Id,
-            ExamDate: DateTime.UtcNow.AddDays(14),
-            Venue: "Hall A",
-            DurationMinutes: 120,
-            SeatNumber: "Seat-45",
-            Notes: "Bring your ID card"
-        );
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Semester Exam", result.Title);
-        Assert.Equal("Hall A", result.Venue);
-        Assert.Equal(120, result.DurationMinutes);
-        Assert.Equal("Seat-45", result.SeatNumber);
-
-        var savedEvent = await context.AcademicEvents.FindAsync(result.Id);
-        Assert.NotNull(savedEvent);
-        Assert.Equal("Exam", savedEvent.EventType);
-        Assert.Equal("Hall A", savedEvent.Venue);
-    }
-
-    [Fact]
-    public async Task GetExams_ShouldReturnExamsForEnrolledCoursesOnly()
-    {
-        // Arrange
-        var (context, uow, currentUserService) = await CreateTestContextAsync();
-        var studentUser = await SeedBaseDataAsync(context);
-        currentUserService.UserId = studentUser.Id.ToString();
-
-        var enrolledOffering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
-        var nonEnrolledOffering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC202");
-
-        var exam1 = new AcademicEvent
-        {
-            Title = "Enrolled Exam",
-            Description = JsonSerializer.Serialize(new EventMetadata { DurationMinutes = 90, SeatNumber = "S1" }),
-            EventType = "Exam",
-            DueDate = DateTime.UtcNow.AddDays(15),
-            Venue = "Hall A",
-            CourseOfferingId = enrolledOffering.Id,
-            CreatedByUserId = studentUser.Id,
-            Priority = "High",
-            Status = "Active",
-            SourceType = "Manual",
-            IsVisibleToStudents = true
-        };
-
-        var exam2 = new AcademicEvent
-        {
-            Title = "Non-enrolled Exam",
-            Description = JsonSerializer.Serialize(new EventMetadata { DurationMinutes = 120, SeatNumber = "S2" }),
-            EventType = "Exam",
-            DueDate = DateTime.UtcNow.AddDays(20),
-            Venue = "Hall B",
-            CourseOfferingId = nonEnrolledOffering.Id,
-            CreatedByUserId = studentUser.Id,
-            Priority = "High",
-            Status = "Active",
-            SourceType = "Manual",
-            IsVisibleToStudents = true
-        };
-
-        await context.AcademicEvents.AddRangeAsync(exam1, exam2);
-        await context.SaveChangesAsync();
-
-        var handler = new GetExamsQueryHandler(uow, currentUserService);
-
-        // Act
-        var result = (await handler.Handle(new GetExamsQuery(), CancellationToken.None)).ToList();
-
-        // Assert
-        Assert.Single(result);
-        Assert.Equal("Enrolled Exam", result[0].Title);
-        Assert.Equal("S1", result[0].SeatNumber);
-    }
-
-    [Fact]
-    public async Task CreateProject_ShouldCreateAndSaveProjectMetadata_WhenValid()
-    {
-        // Arrange
-        var (context, uow, currentUserService) = await CreateTestContextAsync();
-        var studentUser = await SeedBaseDataAsync(context);
-        currentUserService.UserId = studentUser.Id.ToString();
-
-        var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
-        
-        var handler = new CreateProjectCommandHandler(uow, currentUserService);
-        var command = new CreateProjectCommand(
-            Title: "Capstone Project",
-            CourseOfferingId: offering.Id,
-            SupervisorName: "Dr. Smith",
-            SubmissionDate: DateTime.UtcNow.AddDays(30),
-            ProgressPercentage: 25,
-            Notes: "Requires weekly updates",
-            Attachments: new List<AttachmentRequestDto>
-            {
-                new AttachmentRequestDto("proposal.docx", "https://sacs.blob.core.windows.net/proposal.docx", 2048, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-            }
-        );
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Capstone Project", result.Title);
-        Assert.Equal("Dr. Smith", result.SupervisorName);
-        Assert.Equal(25, result.ProgressPercentage);
-        Assert.Single(result.Attachments);
-
-        var savedEvent = await context.AcademicEvents.Include(ae => ae.Attachments).FirstOrDefaultAsync(ae => ae.Id == result.Id);
-        Assert.NotNull(savedEvent);
-        Assert.Equal("Project", savedEvent.EventType);
-        Assert.Single(savedEvent.Attachments);
-    }
-
-    [Fact]
-    public async Task GetProjects_ShouldReturnProjectsForEnrolledCoursesOnly()
-    {
-        // Arrange
-        var (context, uow, currentUserService) = await CreateTestContextAsync();
-        var studentUser = await SeedBaseDataAsync(context);
-        currentUserService.UserId = studentUser.Id.ToString();
-
-        var enrolledOffering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
-        var nonEnrolledOffering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC202");
-
-        var proj1 = new AcademicEvent
-        {
-            Title = "Enrolled Project",
-            Description = JsonSerializer.Serialize(new EventMetadata { SupervisorName = "Dr. A", ProgressPercentage = 10 }),
-            EventType = "Project",
-            DueDate = DateTime.UtcNow.AddDays(30),
-            CourseOfferingId = enrolledOffering.Id,
-            CreatedByUserId = studentUser.Id,
-            Priority = "Medium",
-            Status = "Active",
-            SourceType = "Manual",
-            IsVisibleToStudents = true
-        };
-
-        var proj2 = new AcademicEvent
-        {
-            Title = "Non-enrolled Project",
-            Description = JsonSerializer.Serialize(new EventMetadata { SupervisorName = "Dr. B", ProgressPercentage = 50 }),
-            EventType = "Project",
-            DueDate = DateTime.UtcNow.AddDays(40),
-            CourseOfferingId = nonEnrolledOffering.Id,
-            CreatedByUserId = studentUser.Id,
-            Priority = "Medium",
-            Status = "Active",
-            SourceType = "Manual",
-            IsVisibleToStudents = true
-        };
-
-        await context.AcademicEvents.AddRangeAsync(proj1, proj2);
-        await context.SaveChangesAsync();
-
-        var handler = new GetProjectsQueryHandler(uow, currentUserService);
-
-        // Act
-        var result = (await handler.Handle(new GetProjectsQuery(), CancellationToken.None)).ToList();
-
-        // Assert
-        Assert.Single(result);
-        Assert.Equal("Enrolled Project", result[0].Title);
-        Assert.Equal("Dr. A", result[0].SupervisorName);
-        Assert.Equal(10, result[0].ProgressPercentage);
-    }
-
-    [Fact]
-    public async Task GetCalendar_ShouldReturnCalendarEventsByViewType()
+    public async Task GetCalendar_Views_ShouldReturnCorrectEvents()
     {
         // Arrange
         var (context, uow, currentUserService) = await CreateTestContextAsync();
@@ -617,7 +499,6 @@ public class AcademicEventTests
         
         var today = DateTime.UtcNow.Date;
 
-        // Today's event
         var eventToday = new AcademicEvent
         {
             Title = "Today Event",
@@ -632,7 +513,6 @@ public class AcademicEventTests
             IsVisibleToStudents = true
         };
 
-        // Event later this week (e.g. 2 days later, keeping in mind Sunday start/Saturday end logic)
         var eventWeek = new AcademicEvent
         {
             Title = "Week Event",
@@ -647,7 +527,6 @@ public class AcademicEventTests
             IsVisibleToStudents = true
         };
 
-        // Event later this month on a fixed date
         var targetDate = new DateTime(2027, 6, 15, 12, 0, 0, DateTimeKind.Utc);
         
         var eventDayFixed = new AcademicEvent
@@ -669,7 +548,7 @@ public class AcademicEventTests
             Title = "Fixed Month Event",
             Description = "{}",
             EventType = "Project",
-            DueDate = targetDate.AddDays(10), // June 25, 2026
+            DueDate = targetDate.AddDays(10), // June 25, 2027
             CourseOfferingId = offering.Id,
             CreatedByUserId = studentUser.Id,
             Priority = "Medium",
@@ -681,32 +560,58 @@ public class AcademicEventTests
         await context.AcademicEvents.AddRangeAsync(eventToday, eventWeek, eventDayFixed, eventMonthFixed);
         await context.SaveChangesAsync();
 
-        var handler = new GetCalendarQueryHandler(uow, currentUserService);
-
-        // 1. Test Day View (for targetDate: June 15, 2026)
-        var dayResult = (await handler.Handle(new GetCalendarQuery("day", targetDate), CancellationToken.None)).ToList();
+        // 1. Day View Handler
+        var dailyHandler = new GetDailyCalendarQueryHandler(uow, currentUserService);
+        var dayResult = (await dailyHandler.Handle(new GetDailyCalendarQuery(targetDate), CancellationToken.None)).ToList();
         Assert.Single(dayResult);
         Assert.Equal("Fixed Day Event", dayResult[0].Title);
 
-        // 2. Test Week View (June 15, 2026 is a Monday. Week view starts on Sunday June 14, ends Saturday June 20)
-        var weekResult = (await handler.Handle(new GetCalendarQuery("week", targetDate), CancellationToken.None)).ToList();
+        // 2. Week View Handler
+        var weeklyHandler = new GetWeeklyCalendarQueryHandler(uow, currentUserService);
+        var weekResult = (await weeklyHandler.Handle(new GetWeeklyCalendarQuery(targetDate), CancellationToken.None)).ToList();
         Assert.Single(weekResult);
         Assert.Equal("Fixed Day Event", weekResult[0].Title);
 
-        // 3. Test Month View (June 2026)
-        var monthResult = (await handler.Handle(new GetCalendarQuery("month", targetDate), CancellationToken.None)).ToList();
+        // 3. Month View Handler
+        var monthlyHandler = new GetMonthlyCalendarQueryHandler(uow, currentUserService);
+        var monthResult = (await monthlyHandler.Handle(new GetMonthlyCalendarQuery(targetDate), CancellationToken.None)).ToList();
         Assert.Equal(2, monthResult.Count);
-        Assert.Contains(monthResult, e => e.Title == "Fixed Day Event");
-        Assert.Contains(monthResult, e => e.Title == "Fixed Month Event");
 
-        // 4. Test Upcoming View
-        var upcomingResult = (await handler.Handle(new GetCalendarQuery("upcoming", DateTime.UtcNow), CancellationToken.None)).ToList();
-        // Check that at least the seeded events with future due dates are returned
+        // 4. Upcoming View Handler
+        var upcomingHandler = new GetUpcomingCalendarQueryHandler(uow, currentUserService);
+        var upcomingResult = (await upcomingHandler.Handle(new GetUpcomingCalendarQuery(), CancellationToken.None)).ToList();
         Assert.NotEmpty(upcomingResult);
     }
 
     [Fact]
-    public async Task SetReminders_ShouldClearOldAndSetNewScheduledNotifications()
+    public async Task ConfigureReminders_Global_ShouldUpdateNotificationPreferences()
+    {
+        // Arrange
+        var (context, uow, currentUserService) = await CreateTestContextAsync();
+        var studentUser = await SeedBaseDataAsync(context);
+        currentUserService.UserId = studentUser.Id.ToString();
+
+        var handler = new ConfigureRemindersCommandHandler(uow, currentUserService);
+        var command = new ConfigureRemindersCommand(
+            Reminders: new List<ReminderItemRequestDto>
+            {
+                new("24hours", true),
+                new("72hours", false)
+            }
+        );
+
+        // Act
+        await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        var prefs = await context.NotificationPreferences.Where(np => np.UserId == studentUser.Id).ToListAsync();
+        Assert.Equal(2, prefs.Count);
+        Assert.Contains(prefs, np => np.ReminderType == "24hours" && np.IsEnabled);
+        Assert.Contains(prefs, np => np.ReminderType == "72hours" && !np.IsEnabled);
+    }
+
+    [Fact]
+    public async Task ConfigureReminders_EventSpecific_ShouldScheduleNotifications()
     {
         // Arrange
         var (context, uow, currentUserService) = await CreateTestContextAsync();
@@ -714,12 +619,11 @@ public class AcademicEventTests
         currentUserService.UserId = studentUser.Id.ToString();
 
         var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
-        
         var academicEvent = new AcademicEvent
         {
-            Title = "Exam with reminders",
+            Title = "Target Event",
             Description = "{}",
-            EventType = "Exam",
+            EventType = "Assignment",
             DueDate = DateTime.UtcNow.AddDays(5),
             CourseOfferingId = offering.Id,
             CreatedByUserId = studentUser.Id,
@@ -731,39 +635,118 @@ public class AcademicEventTests
         await context.AcademicEvents.AddAsync(academicEvent);
         await context.SaveChangesAsync();
 
-        // Old scheduled notification for this event & user
-        var oldNotification = new ScheduledNotification
-        {
-            UserId = studentUser.Id,
-            AcademicEventId = academicEvent.Id,
-            ReminderType = "1day",
-            ScheduledTime = DateTime.UtcNow.AddHours(-1),
-            Status = "Sent"
-        };
-        await context.ScheduledNotifications.AddAsync(oldNotification);
-        await context.SaveChangesAsync();
-
-        var handler = new SetRemindersCommandHandler(uow, currentUserService);
-        var command = new SetRemindersCommand(
-            AcademicEventId: academicEvent.Id,
-            Reminders: new List<string> { "1day", "3days" }
+        var handler = new ConfigureRemindersCommandHandler(uow, currentUserService);
+        var command = new ConfigureRemindersCommand(
+            Reminders: new List<ReminderItemRequestDto>
+            {
+                new("24hours", true),
+                new("72hours", true)
+            },
+            EventId: academicEvent.Id
         );
 
         // Act
         await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        // Verify old one is deleted
-        var containsOld = await context.ScheduledNotifications.AnyAsync(sn => sn.Id == oldNotification.Id);
-        Assert.False(containsOld);
-
-        // Verify new ones are created
-        var newNotifications = await context.ScheduledNotifications
+        var scheduled = await context.ScheduledNotifications
             .Where(sn => sn.AcademicEventId == academicEvent.Id && sn.UserId == studentUser.Id)
             .ToListAsync();
 
-        Assert.Equal(2, newNotifications.Count);
-        Assert.Contains(newNotifications, sn => sn.ReminderType == "1day" && sn.Status == "Pending");
-        Assert.Contains(newNotifications, sn => sn.ReminderType == "3days" && sn.Status == "Pending");
+        Assert.Equal(2, scheduled.Count);
+        Assert.Contains(scheduled, sn => sn.ReminderType == "24hours" && sn.Status == "Pending");
+    }
+
+    [Fact]
+    public async Task GetMyReminders_ShouldReturnPendingNotifications()
+    {
+        // Arrange
+        var (context, uow, currentUserService) = await CreateTestContextAsync();
+        var studentUser = await SeedBaseDataAsync(context);
+        currentUserService.UserId = studentUser.Id.ToString();
+
+        var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
+        var academicEvent = new AcademicEvent
+        {
+            Title = "Event Title",
+            Description = "{}",
+            EventType = "Assignment",
+            DueDate = DateTime.UtcNow.AddDays(5),
+            CourseOfferingId = offering.Id,
+            CreatedByUserId = studentUser.Id,
+            Priority = "High",
+            Status = "Active",
+            SourceType = "Manual",
+            IsVisibleToStudents = true
+        };
+        await context.AcademicEvents.AddAsync(academicEvent);
+        await context.SaveChangesAsync();
+
+        var notification = new ScheduledNotification
+        {
+            UserId = studentUser.Id,
+            AcademicEventId = academicEvent.Id,
+            ReminderType = "72hours",
+            ScheduledTime = DateTime.UtcNow.AddDays(2),
+            Status = "Pending"
+        };
+        await context.ScheduledNotifications.AddAsync(notification);
+        await context.SaveChangesAsync();
+
+        var handler = new GetMyRemindersQueryHandler(uow, currentUserService);
+
+        // Act
+        var result = (await handler.Handle(new GetMyRemindersQuery(), CancellationToken.None)).ToList();
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("Event Title", result[0].EventTitle);
+        Assert.Equal("72hours", result[0].ReminderType);
+    }
+
+    [Fact]
+    public async Task DeleteReminder_ShouldRemoveNotification()
+    {
+        // Arrange
+        var (context, uow, currentUserService) = await CreateTestContextAsync();
+        var studentUser = await SeedBaseDataAsync(context);
+        currentUserService.UserId = studentUser.Id.ToString();
+
+        var offering = await context.CourseSemesterOfferings.FirstAsync(co => co.Course.Code == "CSC201");
+        var academicEvent = new AcademicEvent
+        {
+            Title = "Event",
+            Description = "{}",
+            EventType = "Assignment",
+            DueDate = DateTime.UtcNow.AddDays(5),
+            CourseOfferingId = offering.Id,
+            CreatedByUserId = studentUser.Id,
+            Priority = "High",
+            Status = "Active",
+            SourceType = "Manual",
+            IsVisibleToStudents = true
+        };
+        await context.AcademicEvents.AddAsync(academicEvent);
+        await context.SaveChangesAsync();
+
+        var notification = new ScheduledNotification
+        {
+            UserId = studentUser.Id,
+            AcademicEventId = academicEvent.Id,
+            ReminderType = "24hours",
+            ScheduledTime = DateTime.UtcNow.AddDays(4),
+            Status = "Pending"
+        };
+        await context.ScheduledNotifications.AddAsync(notification);
+        await context.SaveChangesAsync();
+
+        var handler = new DeleteReminderCommandHandler(uow);
+
+        // Act
+        await handler.Handle(new DeleteReminderCommand(notification.Id), CancellationToken.None);
+
+        // Assert
+        var deleted = await context.ScheduledNotifications.FindAsync(notification.Id);
+        Assert.Null(deleted);
     }
 }

@@ -1,19 +1,16 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using SACS.Application.Events.Commands.CreateAssignment;
-using SACS.Application.Events.Commands.CreateExam;
-using SACS.Application.Events.Commands.CreateQuiz;
-using SACS.Application.Events.Commands.CreateProject;
-using SACS.Application.Events.Commands.UpdateAssignment;
-using SACS.Application.Events.Commands.DeleteAssignment;
-using SACS.Application.Events.Commands.SetReminders;
-using SACS.Application.Events.Queries.GetAssignments;
-using SACS.Application.Events.Queries.GetExams;
-using SACS.Application.Events.Queries.GetQuizzes;
-using SACS.Application.Events.Queries.GetProjects;
+using SACS.Application.Common.Interfaces;
+using SACS.Application.Events.Commands.CreateEvent;
+using SACS.Application.Events.Commands.UpdateEvent;
+using SACS.Application.Events.Commands.DeleteEvent;
+using SACS.Application.Events.Queries.GetEventById;
+using SACS.Application.Events.Queries.GetEvents;
 using SACS.Application.Events.DTOs;
 
 namespace SACS.API.Controllers;
@@ -24,91 +21,64 @@ namespace SACS.API.Controllers;
 public class EventsController : ControllerBase
 {
     private readonly ISender _sender;
+    private readonly IBlobStorageService _blobStorageService;
 
-    public EventsController(ISender sender)
+    public EventsController(ISender sender, IBlobStorageService blobStorageService)
     {
         _sender = sender;
+        _blobStorageService = blobStorageService;
     }
 
-    // Assignment Management
-    [HttpPost("assignment/create")]
-    public async Task<ActionResult<AssignmentDto>> CreateAssignment([FromBody] CreateAssignmentCommand command)
+    [HttpPost("create")]
+    public async Task<ActionResult<EventDto>> Create([FromBody] CreateEventCommand command)
     {
         var result = await _sender.Send(command);
         return Ok(result);
     }
 
-    [HttpGet("assignment/all")]
-    public async Task<ActionResult<IEnumerable<AssignmentDto>>> GetAllAssignments()
+    [HttpGet("all")]
+    public async Task<ActionResult<IEnumerable<EventDto>>> GetAll()
     {
-        var result = await _sender.Send(new GetAssignmentsQuery());
+        var result = await _sender.Send(new GetEventsQuery());
         return Ok(result);
     }
 
-    [HttpPut("assignment/update")]
-    public async Task<ActionResult<AssignmentDto>> UpdateAssignment([FromBody] UpdateAssignmentCommand command)
+    [HttpGet("{id}")]
+    public async Task<ActionResult<EventDto>> GetById(long id)
     {
+        var result = await _sender.Send(new GetEventByIdQuery(id));
+        return Ok(result);
+    }
+
+    [HttpPut("update/{id}")]
+    public async Task<ActionResult<EventDto>> Update(long id, [FromBody] UpdateEventCommand command)
+    {
+        if (id != command.Id)
+        {
+            return BadRequest("ID mismatch");
+        }
         var result = await _sender.Send(command);
         return Ok(result);
     }
 
-    [HttpDelete("assignment/delete/{id}")]
-    public async Task<IActionResult> DeleteAssignment(long id)
+    [HttpDelete("delete/{id}")]
+    public async Task<IActionResult> Delete(long id)
     {
-        await _sender.Send(new DeleteAssignmentCommand(id));
+        await _sender.Send(new DeleteEventCommand(id));
         return NoContent();
     }
 
-    // Quiz Management
-    [HttpPost("quiz/create")]
-    public async Task<ActionResult<QuizDto>> CreateQuiz([FromBody] CreateQuizCommand command)
+    [HttpPost("upload")]
+    public async Task<ActionResult<string>> UploadFile(IFormFile file)
     {
-        var result = await _sender.Send(command);
-        return Ok(result);
-    }
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest("File is empty");
+        }
 
-    [HttpGet("quiz/all")]
-    public async Task<ActionResult<IEnumerable<QuizDto>>> GetAllQuizzes()
-    {
-        var result = await _sender.Send(new GetQuizzesQuery());
-        return Ok(result);
-    }
-
-    // Exam Management
-    [HttpPost("exam/create")]
-    public async Task<ActionResult<ExamDto>> CreateExam([FromBody] CreateExamCommand command)
-    {
-        var result = await _sender.Send(command);
-        return Ok(result);
-    }
-
-    [HttpGet("exam/all")]
-    public async Task<ActionResult<IEnumerable<ExamDto>>> GetAllExams()
-    {
-        var result = await _sender.Send(new GetExamsQuery());
-        return Ok(result);
-    }
-
-    // Project Submission Management
-    [HttpPost("project/create")]
-    public async Task<ActionResult<ProjectDto>> CreateProject([FromBody] CreateProjectCommand command)
-    {
-        var result = await _sender.Send(command);
-        return Ok(result);
-    }
-
-    [HttpGet("project/all")]
-    public async Task<ActionResult<IEnumerable<ProjectDto>>> GetAllProjects()
-    {
-        var result = await _sender.Send(new GetProjectsQuery());
-        return Ok(result);
-    }
-
-    // Reminders
-    [HttpPost("reminders/set")]
-    public async Task<IActionResult> SetReminders([FromBody] SetRemindersCommand command)
-    {
-        await _sender.Send(command);
-        return NoContent();
+        using var stream = file.OpenReadStream();
+        var fileName = $"{System.Guid.NewGuid()}_{file.FileName}";
+        var fileUrl = await _blobStorageService.UploadAsync(stream, fileName, "event-attachments", file.ContentType);
+        return Ok(new { attachmentUrl = fileUrl });
     }
 }

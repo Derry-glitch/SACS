@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "CDYWUTHdS1A=",
+  "dgSpecHash": "lUlW5Pj4ag8=",
   "success": true,
   "projectFilePath": "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Persistence\\SACS.Persistence.csproj",
   "expectedPackageFiles": [
@@ -66,7 +66,7 @@
     "C:\\Users\\DERRY\\.nuget\\packages\\system.diagnostics.diagnosticsource\\10.0.0\\system.diagnostics.diagnosticsource.10.0.0.nupkg.sha512",
     "C:\\Users\\DERRY\\.nuget\\packages\\system.drawing.common\\6.0.0\\system.drawing.common.6.0.0.nupkg.sha512",
     "C:\\Users\\DERRY\\.nuget\\packages\\system.formats.asn1\\8.0.2\\system.formats.asn1.8.0.2.nupkg.sha512",
-    "C:\\Users\\DERRY\\.nuget\\packages\\system.identitymodel.tokens.jwt\\6.35.0\\system.identitymodel.tokens.jwt.6.35.0.nupkg.sha512",
+    "C:\\Users\\DERRY\\.nuget\\packages\\system.identitymodel.tokens.jwt\\8.0.0\\system.identitymodel.tokens.jwt.8.0.0.nupkg.sha512",
     "C:\\Users\\DERRY\\.nuget\\packages\\system.io.pipelines\\10.0.9\\system.io.pipelines.10.0.9.nupkg.sha512",
     "C:\\Users\\DERRY\\.nuget\\packages\\system.memory\\4.5.4\\system.memory.4.5.4.nupkg.sha512",
     "C:\\Users\\DERRY\\.nuget\\packages\\system.memory.data\\1.0.2\\system.memory.data.1.0.2.nupkg.sha512",

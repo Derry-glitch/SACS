@@ -240,3 +240,5 @@ C:\Users\DERRY\Documents\SACS\tests\IntegrationTests\obj\Debug\net8.0\ref\Integr
 C:\Users\DERRY\Documents\SACS\tests\IntegrationTests\bin\Debug\net8.0\Microsoft.Extensions.Configuration.dll
 C:\Users\DERRY\Documents\SACS\tests\IntegrationTests\bin\Debug\net8.0\Microsoft.Extensions.FileProviders.Physical.dll
 C:\Users\DERRY\Documents\SACS\tests\IntegrationTests\bin\Debug\net8.0\Microsoft.Extensions.FileSystemGlobbing.dll
+C:\Users\DERRY\Documents\SACS\tests\IntegrationTests\obj\Debug\net8.0\IntegrationTests.sourcelink.json
+C:\Users\DERRY\Documents\SACS\tests\IntegrationTests\bin\Debug\net8.0\BCrypt.Net-Next.dll

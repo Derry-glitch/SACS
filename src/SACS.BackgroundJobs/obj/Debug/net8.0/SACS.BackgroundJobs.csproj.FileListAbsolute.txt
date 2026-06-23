@@ -142,3 +142,5 @@ C:\Users\DERRY\Documents\SACS\src\SACS.BackgroundJobs\obj\Debug\net8.0\ref\SACS.
 C:\Users\DERRY\Documents\SACS\src\SACS.BackgroundJobs\bin\Debug\net8.0\Microsoft.Extensions.Configuration.dll
 C:\Users\DERRY\Documents\SACS\src\SACS.BackgroundJobs\bin\Debug\net8.0\Microsoft.Extensions.FileProviders.Physical.dll
 C:\Users\DERRY\Documents\SACS\src\SACS.BackgroundJobs\bin\Debug\net8.0\Microsoft.Extensions.FileSystemGlobbing.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.BackgroundJobs\obj\Debug\net8.0\SACS.BackgroundJobs.sourcelink.json
+C:\Users\DERRY\Documents\SACS\src\SACS.BackgroundJobs\bin\Debug\net8.0\BCrypt.Net-Next.dll

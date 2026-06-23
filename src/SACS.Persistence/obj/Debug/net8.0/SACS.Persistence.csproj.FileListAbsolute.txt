@@ -17,3 +17,4 @@ C:\Users\DERRY\Documents\SACS\src\SACS.Persistence\obj\Debug\net8.0\refint\SACS.
 C:\Users\DERRY\Documents\SACS\src\SACS.Persistence\obj\Debug\net8.0\SACS.Persistence.pdb
 C:\Users\DERRY\Documents\SACS\src\SACS.Persistence\obj\Debug\net8.0\SACS.Persistence.genruntimeconfig.cache
 C:\Users\DERRY\Documents\SACS\src\SACS.Persistence\obj\Debug\net8.0\ref\SACS.Persistence.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Persistence\obj\Debug\net8.0\SACS.Persistence.sourcelink.json

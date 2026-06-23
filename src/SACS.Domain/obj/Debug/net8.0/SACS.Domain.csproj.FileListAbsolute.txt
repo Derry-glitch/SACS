@@ -9,3 +9,4 @@ C:\Users\DERRY\Documents\SACS\src\SACS.Domain\obj\Debug\net8.0\SACS.Domain.dll
 C:\Users\DERRY\Documents\SACS\src\SACS.Domain\obj\Debug\net8.0\refint\SACS.Domain.dll
 C:\Users\DERRY\Documents\SACS\src\SACS.Domain\obj\Debug\net8.0\SACS.Domain.pdb
 C:\Users\DERRY\Documents\SACS\src\SACS.Domain\obj\Debug\net8.0\ref\SACS.Domain.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Domain\obj\Debug\net8.0\SACS.Domain.sourcelink.json

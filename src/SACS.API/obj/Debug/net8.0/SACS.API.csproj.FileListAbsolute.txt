@@ -227,3 +227,5 @@ C:\Users\DERRY\Documents\SACS\src\SACS.API\obj\Debug\net8.0\ref\SACS.API.dll
 C:\Users\DERRY\Documents\SACS\src\SACS.API\bin\Debug\net8.0\Microsoft.Extensions.Configuration.dll
 C:\Users\DERRY\Documents\SACS\src\SACS.API\bin\Debug\net8.0\Microsoft.Extensions.FileProviders.Physical.dll
 C:\Users\DERRY\Documents\SACS\src\SACS.API\bin\Debug\net8.0\Microsoft.Extensions.FileSystemGlobbing.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.API\obj\Debug\net8.0\SACS.API.sourcelink.json
+C:\Users\DERRY\Documents\SACS\src\SACS.API\bin\Debug\net8.0\BCrypt.Net-Next.dll

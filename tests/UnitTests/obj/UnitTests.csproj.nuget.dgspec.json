@@ -58,6 +58,14 @@
             "MediatR": {
               "target": "Package",
               "version": "[14.1.0, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.0.8, )"
+            },
+            "System.IdentityModel.Tokens.Jwt": {
+              "target": "Package",
+              "version": "[8.0.0, )"
             }
           },
           "imports": [
@@ -118,6 +126,102 @@
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.422/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Infrastructure\\SACS.Infrastructure.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Infrastructure\\SACS.Infrastructure.csproj",
+        "projectName": "SACS.Infrastructure",
+        "projectPath": "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Infrastructure\\SACS.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\DERRY\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Infrastructure\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\DERRY\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Application\\SACS.Application.csproj": {
+                "projectPath": "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Application\\SACS.Application.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Azure.Messaging.ServiceBus": {
+              "target": "Package",
+              "version": "[7.20.1, )"
+            },
+            "Azure.Storage.Blobs": {
+              "target": "Package",
+              "version": "[12.29.0, )"
+            },
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            },
+            "FirebaseAdmin": {
+              "target": "Package",
+              "version": "[3.5.0, )"
+            },
+            "MailKit": {
+              "target": "Package",
+              "version": "[4.17.0, )"
+            },
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[8.0.*, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.0.*, )"
+            },
+            "StackExchange.Redis": {
+              "target": "Package",
+              "version": "[3.0.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -250,6 +354,9 @@
               },
               "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Domain\\SACS.Domain.csproj": {
                 "projectPath": "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Domain\\SACS.Domain.csproj"
+              },
+              "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Infrastructure\\SACS.Infrastructure.csproj": {
+                "projectPath": "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Infrastructure\\SACS.Infrastructure.csproj"
               },
               "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Persistence\\SACS.Persistence.csproj": {
                 "projectPath": "C:\\Users\\DERRY\\Documents\\SACS\\src\\SACS.Persistence\\SACS.Persistence.csproj"

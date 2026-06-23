@@ -15,3 +15,4 @@ C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\SACS.Infr
 C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\refint\SACS.Infrastructure.dll
 C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\SACS.Infrastructure.pdb
 C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\ref\SACS.Infrastructure.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\SACS.Infrastructure.sourcelink.json

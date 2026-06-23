@@ -13,3 +13,4 @@ C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\SACS.Applica
 C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\refint\SACS.Application.dll
 C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\SACS.Application.pdb
 C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\ref\SACS.Application.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\SACS.Application.sourcelink.json
