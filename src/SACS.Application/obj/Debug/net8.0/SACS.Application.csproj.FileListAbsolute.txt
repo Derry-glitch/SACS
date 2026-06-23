@@ -1,0 +1,15 @@
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\bin\Debug\net8.0\SACS.Application.deps.json
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\bin\Debug\net8.0\SACS.Application.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\bin\Debug\net8.0\SACS.Application.pdb
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\bin\Debug\net8.0\SACS.Domain.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\bin\Debug\net8.0\SACS.Domain.pdb
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\SACS.Application.csproj.AssemblyReference.cache
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\SACS.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\SACS.Application.AssemblyInfoInputs.cache
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\SACS.Application.AssemblyInfo.cs
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\SACS.Application.csproj.CoreCompileInputs.cache
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\SACS.App.F1FF91FC.Up2Date
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\SACS.Application.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\refint\SACS.Application.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\SACS.Application.pdb
+C:\Users\DERRY\Documents\SACS\src\SACS.Application\obj\Debug\net8.0\ref\SACS.Application.dll

@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "icCbhOYi8hBUQWaUstHeVszUMgFPf4wX8IIm0DFp7es=",
+  "Source": "SACS.API",
+  "BasePath": "_content/SACS.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

@@ -1,0 +1,17 @@
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\bin\Debug\net8.0\SACS.Infrastructure.deps.json
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\bin\Debug\net8.0\SACS.Infrastructure.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\bin\Debug\net8.0\SACS.Infrastructure.pdb
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\bin\Debug\net8.0\SACS.Application.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\bin\Debug\net8.0\SACS.Domain.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\bin\Debug\net8.0\SACS.Application.pdb
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\bin\Debug\net8.0\SACS.Domain.pdb
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\SACS.Infrastructure.csproj.AssemblyReference.cache
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\SACS.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\SACS.Infrastructure.AssemblyInfoInputs.cache
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\SACS.Infrastructure.AssemblyInfo.cs
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\SACS.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\SACS.Inf.0AB15D65.Up2Date
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\SACS.Infrastructure.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\refint\SACS.Infrastructure.dll
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\SACS.Infrastructure.pdb
+C:\Users\DERRY\Documents\SACS\src\SACS.Infrastructure\obj\Debug\net8.0\ref\SACS.Infrastructure.dll
