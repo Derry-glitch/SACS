@@ -8,6 +8,8 @@ using SACS.Infrastructure.Identity;
 using SACS.Infrastructure.Messaging;
 using SACS.Infrastructure.Notifications;
 using SACS.Infrastructure.Storage;
+using SACS.Infrastructure.BackgroundJobs;
+using SACS.Infrastructure.Services;
 using StackExchange.Redis;
 
 namespace SACS.Infrastructure;
@@ -43,6 +45,16 @@ public static class DependencyInjection
         // Register JWT Services
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+
+        // Register Background Job Service
+        services.AddScoped<IBackgroundJobService, HangfireBackgroundJobService>();
+
+        // Register Python AI Client
+        services.AddHttpClient<IAiServiceClient, PythonAiServiceClient>(client =>
+        {
+            var baseUrl = configuration["AIService:BaseUrl"] ?? "http://localhost:8000";
+            client.BaseAddress = new Uri(baseUrl);
+        });
 
         return services;
     }
