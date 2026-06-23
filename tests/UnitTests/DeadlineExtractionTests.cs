@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using SACS.Application.AI.Commands.ExtractDeadline;
+using SACS.Application.Common.Events;
 using SACS.Application.Common.Interfaces;
 using SACS.Domain.Entities;
 using SACS.Persistence.Contexts;
@@ -33,14 +34,14 @@ public class DeadlineExtractionTests
         public string? Email => "student@sacs.edu";
     }
 
-    private class FakeBackgroundJobService : IBackgroundJobService
+    private class FakeEventBus : IEventBus
     {
-        public int EnqueueCallCount { get; private set; }
+        public List<object> PublishedEvents { get; } = new();
 
-        public string Enqueue<T>(Expression<Func<T, Task>> methodCall)
+        public Task PublishAsync<T>(T message, CancellationToken cancellationToken = default) where T : class
         {
-            EnqueueCallCount++;
-            return "mock-job-id";
+            PublishedEvents.Add(message);
+            return Task.CompletedTask;
         }
     }
 
@@ -96,8 +97,8 @@ public class DeadlineExtractionTests
     {
         // Arrange
         var (context, uow, currentUserService) = await CreateTestContextAsync();
-        var fakeBgService = new FakeBackgroundJobService();
-        var handler = new ExtractDeadlineCommandHandler(uow, currentUserService, fakeBgService);
+        var fakeEventBus = new FakeEventBus();
+        var handler = new ExtractDeadlineCommandHandler(uow, currentUserService, fakeEventBus);
         var command = new ExtractDeadlineCommand(
             RawContent: "Machine Learning assignment should be submitted on 14 July before 11:59 PM.",
             SourceChannel: "Telegram"
@@ -108,7 +109,8 @@ public class DeadlineExtractionTests
 
         // Assert
         Assert.True(ingestedMessageId > 0);
-        Assert.Equal(1, fakeBgService.EnqueueCallCount);
+        Assert.Single(fakeEventBus.PublishedEvents);
+        Assert.IsType<DeadlineExtractionEvent>(fakeEventBus.PublishedEvents[0]);
 
         var savedMessage = await context.IngestedMessages.FirstOrDefaultAsync(m => m.Id == ingestedMessageId);
         Assert.NotNull(savedMessage);

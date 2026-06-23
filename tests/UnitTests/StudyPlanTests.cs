@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using SACS.Application.AI.Commands.GenerateStudyPlan;
+using SACS.Application.Common.Events;
 using SACS.Application.Common.Interfaces;
 using SACS.Domain.Entities;
 using SACS.Persistence.Contexts;
@@ -33,14 +34,14 @@ public class StudyPlanTests
         public string? Email => "student@sacs.edu";
     }
 
-    private class FakeBackgroundJobService : IBackgroundJobService
+    private class FakeEventBus : IEventBus
     {
-        public int EnqueueCallCount { get; private set; }
+        public List<object> PublishedEvents { get; } = new();
 
-        public string Enqueue<T>(Expression<Func<T, Task>> methodCall)
+        public Task PublishAsync<T>(T message, CancellationToken cancellationToken = default) where T : class
         {
-            EnqueueCallCount++;
-            return "mock-job-id";
+            PublishedEvents.Add(message);
+            return Task.CompletedTask;
         }
     }
 
@@ -158,16 +159,17 @@ public class StudyPlanTests
     {
         // Arrange
         var (context, uow, currentUserService) = await CreateTestContextAsync();
-        var fakeBgService = new FakeBackgroundJobService();
-        var handler = new GenerateStudyPlanCommandHandler(currentUserService, fakeBgService);
+        var fakeEventBus = new FakeEventBus();
+        var handler = new GenerateStudyPlanCommandHandler(currentUserService, fakeEventBus);
         var command = new GenerateStudyPlanCommand("Weekly Study Plan", new() { { "Monday", 2.0 } });
 
         // Act
-        var jobId = await handler.Handle(command, CancellationToken.None);
+        var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal("mock-job-id", jobId);
-        Assert.Equal(1, fakeBgService.EnqueueCallCount);
+        Assert.Equal("EventPublished", result);
+        Assert.Single(fakeEventBus.PublishedEvents);
+        Assert.IsType<StudyPlanGenerationEvent>(fakeEventBus.PublishedEvents[0]);
     }
 
     [Fact]

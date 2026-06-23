@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using SACS.Application.AI.Commands.SummarizeLectureNotes;
+using SACS.Application.Common.Events;
 using SACS.Application.Common.Interfaces;
 using SACS.Domain.Entities;
 using SACS.Persistence.Contexts;
@@ -33,14 +34,14 @@ public class LectureSummaryTests
         public string? Email => "student@sacs.edu";
     }
 
-    private class FakeBackgroundJobService : IBackgroundJobService
+    private class FakeEventBus : IEventBus
     {
-        public int EnqueueCallCount { get; private set; }
+        public List<object> PublishedEvents { get; } = new();
 
-        public string Enqueue<T>(Expression<Func<T, Task>> methodCall)
+        public Task PublishAsync<T>(T message, CancellationToken cancellationToken = default) where T : class
         {
-            EnqueueCallCount++;
-            return "mock-job-id";
+            PublishedEvents.Add(message);
+            return Task.CompletedTask;
         }
     }
 
@@ -145,8 +146,8 @@ public class LectureSummaryTests
         // Arrange
         var (context, uow, currentUserService) = await CreateTestContextAsync();
         var fakeBlob = new FakeBlobStorageService();
-        var fakeBgService = new FakeBackgroundJobService();
-        var handler = new SummarizeLectureNotesCommandHandler(uow, currentUserService, fakeBlob, fakeBgService);
+        var fakeEventBus = new FakeEventBus();
+        var handler = new SummarizeLectureNotesCommandHandler(uow, currentUserService, fakeBlob, fakeEventBus);
 
         using var memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("Fake file content. Machine Learning lecture notes."));
         var command = new SummarizeLectureNotesCommand(
@@ -162,7 +163,8 @@ public class LectureSummaryTests
 
         // Assert
         Assert.True(fileRecordId > 0);
-        Assert.Equal(1, fakeBgService.EnqueueCallCount);
+        Assert.Single(fakeEventBus.PublishedEvents);
+        Assert.IsType<LectureNoteSummarizationEvent>(fakeEventBus.PublishedEvents[0]);
 
         var fileRecord = await context.FileRecords.FirstOrDefaultAsync(f => f.Id == fileRecordId);
         Assert.NotNull(fileRecord);

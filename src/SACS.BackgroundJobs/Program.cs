@@ -37,6 +37,9 @@ public class Program
 
                 // Run Hangfire Server within this worker host
                 services.AddHangfireServer();
+
+                // Run Azure Service Bus Consumer Hosted Service
+                services.AddHostedService<AzureServiceBusConsumer>();
             })
             .Build();
 
