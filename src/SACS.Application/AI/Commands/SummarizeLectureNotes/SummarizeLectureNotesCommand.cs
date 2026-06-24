@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using MediatR;
+using SACS.Application.Common.Events;
 using SACS.Application.Common.Interfaces;
 using SACS.Domain.Entities;
 using SACS.Domain.Repositories;
@@ -34,18 +35,18 @@ public class SummarizeLectureNotesCommandHandler : IRequestHandler<SummarizeLect
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
     private readonly IBlobStorageService _blobStorageService;
-    private readonly IBackgroundJobService _backgroundJobService;
+    private readonly IEventBus _eventBus;
 
     public SummarizeLectureNotesCommandHandler(
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUserService,
         IBlobStorageService _blobStorageService,
-        IBackgroundJobService backgroundJobService)
+        IEventBus eventBus)
     {
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
         this._blobStorageService = _blobStorageService;
-        _backgroundJobService = backgroundJobService;
+        _eventBus = eventBus;
     }
 
     public async Task<long> Handle(SummarizeLectureNotesCommand request, CancellationToken cancellationToken)
@@ -84,9 +85,8 @@ public class SummarizeLectureNotesCommandHandler : IRequestHandler<SummarizeLect
         await _unitOfWork.Repository<FileRecord>().AddAsync(fileRecord, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 3. Queue Background summarization
-        _backgroundJobService.Enqueue<ISender>(sender => 
-            sender.Send(new ProcessLectureSummaryCommand(fileRecord.Id), CancellationToken.None));
+        // 3. Publish Event to Azure Service Bus
+        await _eventBus.PublishAsync(new LectureNoteSummarizationEvent(fileRecord.Id), cancellationToken);
 
         return fileRecord.Id;
     }

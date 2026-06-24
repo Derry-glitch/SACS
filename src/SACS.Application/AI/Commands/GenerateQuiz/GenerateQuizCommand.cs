@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using MediatR;
+using SACS.Application.Common.Events;
 using SACS.Application.Common.Interfaces;
 
 namespace SACS.Application.AI.Commands.GenerateQuiz;
@@ -29,17 +30,17 @@ public class GenerateQuizCommandValidator : AbstractValidator<GenerateQuizComman
 public class GenerateQuizCommandHandler : IRequestHandler<GenerateQuizCommand, string>
 {
     private readonly ICurrentUserService _currentUserService;
-    private readonly IBackgroundJobService _backgroundJobService;
+    private readonly IEventBus _eventBus;
 
     public GenerateQuizCommandHandler(
         ICurrentUserService currentUserService,
-        IBackgroundJobService backgroundJobService)
+        IEventBus eventBus)
     {
         _currentUserService = currentUserService;
-        _backgroundJobService = backgroundJobService;
+        _eventBus = eventBus;
     }
 
-    public Task<string> Handle(GenerateQuizCommand request, CancellationToken cancellationToken)
+    public async Task<string> Handle(GenerateQuizCommand request, CancellationToken cancellationToken)
     {
         var userIdStr = _currentUserService.UserId;
         if (string.IsNullOrEmpty(userIdStr))
@@ -49,16 +50,17 @@ public class GenerateQuizCommandHandler : IRequestHandler<GenerateQuizCommand, s
 
         var userId = long.Parse(userIdStr);
 
-        // Queue the background quiz generation job
-        var jobId = _backgroundJobService.Enqueue<ISender>(sender =>
-            sender.Send(new ProcessQuizGenerationCommand(
-                request.CourseOfferingId,
-                request.Title,
-                request.LectureNoteContent,
-                request.DifficultyLevel,
-                userId
-            ), CancellationToken.None));
+        // Publish event to Azure Service Bus
+        var busEvent = new QuizGenerationEvent(
+            request.CourseOfferingId,
+            request.Title,
+            request.LectureNoteContent,
+            request.DifficultyLevel,
+            userId
+        );
 
-        return Task.FromResult(jobId);
+        await _eventBus.PublishAsync(busEvent, cancellationToken);
+
+        return "EventPublished";
     }
 }

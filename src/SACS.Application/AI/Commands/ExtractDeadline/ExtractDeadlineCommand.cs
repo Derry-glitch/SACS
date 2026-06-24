@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using MediatR;
+using SACS.Application.Common.Events;
 using SACS.Application.Common.Interfaces;
 using SACS.Domain.Entities;
 using SACS.Domain.Repositories;
@@ -24,16 +25,16 @@ public class ExtractDeadlineCommandHandler : IRequestHandler<ExtractDeadlineComm
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IBackgroundJobService _backgroundJobService;
+    private readonly IEventBus _eventBus;
 
     public ExtractDeadlineCommandHandler(
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUserService,
-        IBackgroundJobService backgroundJobService)
+        IEventBus eventBus)
     {
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
-        _backgroundJobService = backgroundJobService;
+        _eventBus = eventBus;
     }
 
     public async Task<long> Handle(ExtractDeadlineCommand request, CancellationToken cancellationToken)
@@ -58,9 +59,8 @@ public class ExtractDeadlineCommandHandler : IRequestHandler<ExtractDeadlineComm
         await _unitOfWork.Repository<IngestedMessage>().AddAsync(ingestedMessage, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Queue the background NLP extraction job
-        _backgroundJobService.Enqueue<ISender>(sender => 
-            sender.Send(new ProcessDeadlineExtractionCommand(ingestedMessage.Id), CancellationToken.None));
+        // Publish event to Azure Service Bus
+        await _eventBus.PublishAsync(new DeadlineExtractionEvent(ingestedMessage.Id), cancellationToken);
 
         return ingestedMessage.Id;
     }

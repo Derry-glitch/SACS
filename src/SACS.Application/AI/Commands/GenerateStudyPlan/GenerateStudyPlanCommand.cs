@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using MediatR;
+using SACS.Application.Common.Events;
 using SACS.Application.Common.Interfaces;
 
 namespace SACS.Application.AI.Commands.GenerateStudyPlan;
@@ -25,17 +26,17 @@ public class GenerateStudyPlanCommandValidator : AbstractValidator<GenerateStudy
 public class GenerateStudyPlanCommandHandler : IRequestHandler<GenerateStudyPlanCommand, string>
 {
     private readonly ICurrentUserService _currentUserService;
-    private readonly IBackgroundJobService _backgroundJobService;
+    private readonly IEventBus _eventBus;
 
     public GenerateStudyPlanCommandHandler(
         ICurrentUserService currentUserService,
-        IBackgroundJobService backgroundJobService)
+        IEventBus eventBus)
     {
         _currentUserService = currentUserService;
-        _backgroundJobService = backgroundJobService;
+        _eventBus = eventBus;
     }
 
-    public Task<string> Handle(GenerateStudyPlanCommand request, CancellationToken cancellationToken)
+    public async Task<string> Handle(GenerateStudyPlanCommand request, CancellationToken cancellationToken)
     {
         var userIdStr = _currentUserService.UserId;
         if (string.IsNullOrEmpty(userIdStr))
@@ -45,14 +46,15 @@ public class GenerateStudyPlanCommandHandler : IRequestHandler<GenerateStudyPlan
 
         var userId = long.Parse(userIdStr);
 
-        // Queue background study plan generation job
-        var jobId = _backgroundJobService.Enqueue<ISender>(sender =>
-            sender.Send(new ProcessStudyPlanGenerationCommand(
-                request.Name,
-                request.AvailableFreeHours,
-                userId
-            ), CancellationToken.None));
+        // Publish event to Azure Service Bus
+        var busEvent = new StudyPlanGenerationEvent(
+            request.Name,
+            request.AvailableFreeHours,
+            userId
+        );
 
-        return Task.FromResult(jobId);
-    }
-}
+        await _eventBus.PublishAsync(busEvent, cancellationToken);
+
+        return "EventPublished";
+      }
+  }
