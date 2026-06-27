@@ -22,13 +22,17 @@ class ApiClient {
         onError: (DioException error, handler) async {
           if (error.response?.statusCode == 401) {
             final refreshToken = await _storage.read(key: 'refreshToken');
-            if (refreshToken != null) {
+            final accessToken = await _storage.read(key: 'accessToken');
+            if (refreshToken != null && accessToken != null) {
               try {
                 // Request token refresh
                 final dioRefresh = Dio(BaseOptions(baseUrl: ApiEndpoints.baseUrl));
                 final response = await dioRefresh.post(
                   ApiEndpoints.refresh,
-                  data: {'refreshToken': refreshToken},
+                  data: {
+                    'accessToken': accessToken,
+                    'refreshToken': refreshToken,
+                  },
                 );
 
                 if (response.statusCode == 200) {

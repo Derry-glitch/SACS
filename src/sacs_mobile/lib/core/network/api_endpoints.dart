@@ -1,5 +1,18 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+
 class ApiEndpoints {
-  static const String baseUrl = 'https://sacs-api.azurewebsites.net'; // Production backend placeholder
+  static String get baseUrl {
+    if (kIsWeb) {
+      return 'http://localhost:5058';
+    }
+    try {
+      if (Platform.isAndroid) {
+        return 'http://10.0.2.2:5058';
+      }
+    } catch (_) {}
+    return 'http://localhost:5058';
+  }
 
   // Authentication
   static const String register = '/api/auth/register';
@@ -8,12 +21,12 @@ class ApiEndpoints {
   static const String logout = '/api/auth/logout';
 
   // Events
-  static const String createEvent = '/api/events/create';
-  static const String allEvents = '/api/events/all';
-  static String eventById(int id) => '/api/events/$id';
-  static String updateEvent(int id) => '/api/events/update/$id';
-  static String deleteEvent(int id) => '/api/events/delete/$id';
-  static const String uploadAttachment = '/api/events/upload';
+  static const String createEvent = '/api/Events/create';
+  static const String allEvents = '/api/Events/all';
+  static String eventById(int id) => '/api/Events/$id';
+  static String updateEvent(int id) => '/api/Events/update/$id';
+  static String deleteEvent(int id) => '/api/Events/delete/$id';
+  static const String uploadAttachment = '/api/Events/upload';
 
   // Calendar
   static const String dailyCalendar = '/api/calendar/day';
@@ -27,8 +40,8 @@ class ApiEndpoints {
   static String deleteReminder(int id) => '/api/reminders/delete/$id';
 
   // AI Features
-  static const String extractDeadline = '/api/ai/extract-deadline';
-  static const String summarizeNotes = '/api/ai/summarize-notes';
-  static const String generateQuiz = '/api/ai/generate-quiz';
-  static const String generateStudyPlan = '/api/ai/generate-study-plan';
+  static const String extractDeadline = '/api/DeadlineExtraction/extract';
+  static const String summarizeNotes = '/api/LectureSummary/summarize';
+  static const String generateQuiz = '/api/QuizGeneration/generate';
+  static const String generateStudyPlan = '/api/StudyPlan/generate';
 }

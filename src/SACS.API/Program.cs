@@ -62,6 +62,17 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, WebCurrentUserService>();
 
+// Add CORS configuration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Register SACS Core Services (Clean Architecture layers)
 builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -130,6 +141,8 @@ app.UseMiddleware<CustomExceptionMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseRouting();
+
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
