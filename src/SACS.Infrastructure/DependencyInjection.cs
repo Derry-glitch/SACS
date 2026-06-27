@@ -23,8 +23,27 @@ public static class DependencyInjection
 
         // Register StackExchange.Redis ConnectionMultiplexer
         var redisConnectionString = configuration.GetConnectionString("Redis") ?? "localhost:6379";
-        services.AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(redisConnectionString));
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var options = ConfigurationOptions.Parse(redisConnectionString);
+            options.AbortOnConnectFail = false; // Allow app to start even if Redis is temporarily offline
+            options.ConnectTimeout = 5000;
+            return ConnectionMultiplexer.Connect(options);
+        });
         services.AddScoped<ICacheService, RedisCacheService>();
+
+        // Initialize Firebase default app instance for push notifications if not already initialized
+        if (FirebaseAdmin.FirebaseApp.DefaultInstance == null)
+        {
+            try
+            {
+                FirebaseAdmin.FirebaseApp.Create();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Firebase Admin Warning] Could not initialize Firebase default app: {ex.Message}");
+            }
+        }
 
         // Register Azure Blob Storage ServiceClient
         var blobConnectionString = configuration.GetConnectionString("AzureBlobStorage") ?? "UseDevelopmentStorage=true";

@@ -15,8 +15,23 @@ using SACS.API.Middleware;
 using SACS.API.Services;
 using SACS.Application;
 using SACS.Persistence.Contexts;
+using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
+try
+{
+    Log.Information("Starting SACS API Bootstrapper...");
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    builder.Host.UseSerilog((context, services, configuration) => configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .WriteTo.Console());
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -70,6 +85,30 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader();
+    });
+});
+
+// Register Health Checks
+builder.Services.AddHealthChecks()
+    .AddCheck<DbHealthCheck>("Database")
+    .AddCheck<RedisHealthCheck>("Redis");
+
+// Register Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        return System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.Identity?.Name ?? httpContext.Request.Headers.Host.ToString(),
+            factory: partition => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 100, // 100 requests per minute globally per client
+                QueueLimit = 20,
+                QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst,
+                Window = TimeSpan.FromMinutes(1)
+            });
     });
 });
 
@@ -144,12 +183,25 @@ app.UseRouting();
 
 app.UseCors("AllowAll");
 
+app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 // Setup Hangfire Dashboard (Secured or for admin paths in production)
 app.UseHangfireDashboard("/hangfire");
 
+app.MapHealthChecks("/health");
+
 app.MapControllers();
 
-app.Run();
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application start-up failed");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

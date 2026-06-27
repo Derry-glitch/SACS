@@ -1,0 +1,48 @@
+name: SACS CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "Password123!"
+        ports:
+          - 1433:1433
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install dependencies
+      run: dotnet restore SACS.sln
+
+    - name: Build Solution
+      run: dotnet build SACS.sln --no-restore -c Release
+
+    - name: Run Tests
+      run: dotnet test SACS.sln --no-build -c Release
+      env:
+        ConnectionStrings__DefaultConnection: "Server=localhost;Database=SacsDb;User Id=sa;Password=Password123!;TrustServerCertificate=True"
+        ConnectionStrings__Redis: "localhost:6379"
+
+    - name: Build Docker Image
+      run: |
+        docker build -t sacs-api:latest -f Dockerfile .
