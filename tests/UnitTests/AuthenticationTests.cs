@@ -288,4 +288,49 @@ public class AuthenticationTests
         Assert.NotNull(token.RevokedAt);
         Assert.Equal("Logout", token.ReasonRevoked);
     }
+
+    [Fact]
+    public void ValidateToken_ShouldSucceed_WithProgramSettings()
+    {
+        // Arrange
+        var user = new User
+        {
+            Id = 1,
+            Email = "student@sacs.edu",
+            FirstName = "John",
+            LastName = "Doe",
+            InstitutionId = 1
+        };
+        var roles = new[] { "Student" };
+        var token = _jwtTokenGenerator.GenerateToken(user, roles);
+
+        var secretKey = "SuperSecretKeyForSacsDevelopmentNeedsToBeAtLeast32BytesLong!";
+        var issuer = "SACS";
+        var audience = "SACS-Students";
+
+        var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var validationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = issuer,
+            ValidAudience = audience,
+            IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secretKey)),
+            NameClaimType = ClaimTypes.NameIdentifier,
+            RoleClaimType = ClaimTypes.Role,
+            ClockSkew = TimeSpan.FromMinutes(5)
+        };
+
+        // Act
+        var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
+
+        // Assert
+        Assert.NotNull(principal);
+        Assert.NotNull(validatedToken);
+        Assert.Equal("1", principal.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        Assert.Equal("student@sacs.edu", principal.FindFirst(ClaimTypes.Email)?.Value);
+        Assert.Equal("Student", principal.FindFirst(ClaimTypes.Role)?.Value);
+    }
 }

@@ -35,11 +35,11 @@ builder.Services.AddSwaggerGen(options =>
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter 'Bearer' followed by a space and then your JWT token.\nExample: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\""
+        Description = "JWT Authorization header using the Bearer scheme. Enter your JWT token only."
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -68,9 +68,15 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
 
 // Configure JWT Authentication
-var secretKey = builder.Configuration["Jwt:Secret"] ?? "SuperSecretKeyForSacsDevelopmentNeedsToBeAtLeast32BytesLong!";
-var issuer = builder.Configuration["Jwt:Issuer"] ?? "SACS";
-var audience = builder.Configuration["Jwt:Audience"] ?? "SACS-Students";
+var jwtOptions = builder.Configuration.GetSection("Jwt").Get<SACS.Infrastructure.Identity.JwtOptions>() ?? new SACS.Infrastructure.Identity.JwtOptions
+{
+    Secret = "SuperSecretKeyForSacsDevelopmentNeedsToBeAtLeast32BytesLong!",
+    Issuer = "SACS",
+    Audience = "SACS-Students"
+};
+var secretKey = jwtOptions.Secret;
+var issuer = jwtOptions.Issuer;
+var audience = jwtOptions.Audience;
 
 builder.Services.AddAuthentication(options =>
 {
@@ -88,7 +94,9 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = issuer,
         ValidAudience = audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-        ClockSkew = TimeSpan.Zero
+        NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier,
+        RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+        ClockSkew = TimeSpan.FromMinutes(5) // Allow small clock skew to avoid instant validation failures
     };
 });
 
@@ -120,6 +128,8 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<CustomExceptionMiddleware>();
 
 app.UseHttpsRedirection();
+
+app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
