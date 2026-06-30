@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../providers/event_provider.dart';
 import '../widgets/student_welcome_card.dart';
@@ -34,6 +35,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final currentUser = authState.user;
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/create-event'),
+        backgroundColor: AppTheme.primaryLight,
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

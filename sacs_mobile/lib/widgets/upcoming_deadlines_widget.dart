@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../models/event_model.dart';
 import '../core/theme/app_theme.dart';
 
@@ -78,6 +79,7 @@ class UpcomingDeadlinesWidget extends StatelessWidget {
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
+            onTap: () => context.push('/event-details', extra: event),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: CircleAvatar(
               backgroundColor: isHighPriority

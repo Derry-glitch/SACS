@@ -134,6 +134,32 @@ class ApiService {
     }
   }
 
+  Future<EventModel> createEvent(Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.post('/api/Events/create', data: data);
+      return EventModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<EventModel> updateEvent(int id, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.put('/api/Events/update/$id', data: data);
+      return EventModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<void> deleteEvent(int id) async {
+    try {
+      await _dio.delete('/api/Events/delete/$id');
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   Failure _handleDioError(DioException error) {
     if (error.response != null) {
       final data = error.response?.data;

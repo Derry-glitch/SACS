@@ -2,7 +2,10 @@ import 'package:go_router/go_router.dart';
 import '../../screens/login_screen.dart';
 import '../../screens/register_screen.dart';
 import '../../screens/dashboard_screen.dart';
+import '../../screens/event_detail_screen.dart';
+import '../../screens/event_form_screen.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/event_model.dart';
 
 class AppRouter {
   final AuthProvider authProvider;
@@ -41,6 +44,22 @@ class AppRouter {
       GoRoute(
         path: '/',
         builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: '/event-details',
+        builder: (context, state) => EventDetailScreen(
+          event: state.extra as EventModel,
+        ),
+      ),
+      GoRoute(
+        path: '/create-event',
+        builder: (context, state) => const EventFormScreen(),
+      ),
+      GoRoute(
+        path: '/edit-event',
+        builder: (context, state) => EventFormScreen(
+          event: state.extra as EventModel?,
+        ),
       ),
     ],
   );
