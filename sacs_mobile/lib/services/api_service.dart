@@ -169,6 +169,47 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> summarizeText(String text) async {
+    try {
+      final response = await _dio.post('/api/AI/summarize-text', data: {'text': text});
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> generateQuiz(String content, String difficulty) async {
+    try {
+      final response = await _dio.post(
+        '/api/AI/generate-quiz',
+        data: {'content': content, 'difficultyLevel': difficulty},
+      );
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> generateStudyPlan(
+    List<String> courses,
+    List<Map<String, dynamic>> deadlines,
+    Map<String, double> freeHours,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/api/AI/generate-study-plan',
+        data: {
+          'courses': courses,
+          'deadlines': deadlines,
+          'freeStudyHours': freeHours,
+        },
+      );
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   Failure _handleDioError(DioException error) {
     if (error.response != null) {
       final data = error.response?.data;

@@ -23,6 +23,9 @@ class DeadlineExtractionResponse(BaseModel):
 class SummaryResponse(BaseModel):
     summary: str
 
+class SummarizeTextRequest(BaseModel):
+    text: str
+
 class QuizQuestion(BaseModel):
     question_text: str
     options: List[str]
@@ -208,6 +211,41 @@ async def summarize(file: UploadFile = File(...)):
         f"- Check SACS for any upcoming assessment deadlines related to this course."
     )
     
+    return SummaryResponse(summary=summary_text)
+
+@app.post("/ai/summarize-text", response_model=SummaryResponse)
+def summarize_text(request: SummarizeTextRequest):
+    content = request.text
+    topics = []
+    if "machine learning" in content.lower() or "ml" in content.lower():
+        topics.append("Machine Learning Fundamentals")
+        topics.append("Supervised vs Unsupervised learning techniques")
+        topics.append("Model evaluation metrics (Accuracy, Precision, Recall, F1)")
+    if "database" in content.lower() or "sql" in content.lower():
+        topics.append("Database Management Systems")
+        topics.append("Relational Database Schema Design & Normalization")
+        topics.append("SQL Query execution and optimization")
+    if "network" in content.lower() or "tcp" in content.lower():
+        topics.append("Computer Networks & Protocol Suite")
+        topics.append("OSI Reference Model Layering")
+        topics.append("Routing algorithms and transport protocols")
+        
+    if not topics:
+        topics.append("General Academic Lecture Content")
+        topics.append("Core conceptual definitions and syllabus overview")
+        topics.append("Practical applications and assignment walkthroughs")
+
+    summary_text = (
+        f"### ACADEMIC NOTE SUMMARY\n\n"
+        f"**Overview:**\n"
+        f"This note covers major academic concepts, principles, and applications.\n\n"
+        f"**Key Topics Covered:**\n"
+        + "\n".join([f"- {t}" for t in topics]) + "\n\n"
+        f"**Important Notes & Action Items:**\n"
+        f"- Review all key conceptual definitions and definitions.\n"
+        f"- Practice solving problems and review example scenarios.\n"
+        f"- Cross-reference with SACS event dashboard for related deadlines."
+    )
     return SummaryResponse(summary=summary_text)
 
 @app.post("/ai/generate-quiz", response_model=QuizGenerationResponse)

@@ -6,6 +6,10 @@ import '../../screens/event_detail_screen.dart';
 import '../../screens/event_form_screen.dart';
 import '../../screens/student_id_screen.dart';
 import '../../screens/id_verification_screen.dart';
+import '../../screens/ai_dashboard_screen.dart';
+import '../../screens/note_summarizer_screen.dart';
+import '../../screens/quiz_generator_screen.dart';
+import '../../screens/study_planner_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/event_model.dart';
 
@@ -70,6 +74,22 @@ class AppRouter {
       GoRoute(
         path: '/verify-id',
         builder: (context, state) => const IdVerificationScreen(),
+      ),
+      GoRoute(
+        path: '/ai-dashboard',
+        builder: (context, state) => const AiDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/note-summarizer',
+        builder: (context, state) => const NoteSummarizerScreen(),
+      ),
+      GoRoute(
+        path: '/quiz-generator',
+        builder: (context, state) => const QuizGenerationScreen(),
+      ),
+      GoRoute(
+        path: '/study-planner',
+        builder: (context, state) => const StudyPlannerScreen(),
       ),
     ],
   );

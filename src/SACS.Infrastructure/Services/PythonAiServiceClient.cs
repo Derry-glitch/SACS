@@ -45,6 +45,15 @@ public class PythonAiServiceClient : IAiServiceClient
 
         var result = await response.Content.ReadFromJsonAsync<SummaryResponseDto>(JsonOptions, cancellationToken);
         return result ?? new SummaryResponseDto { Summary = string.Empty };
+     }
+ 
+    public async Task<SummaryResponseDto> SummarizeTextAsync(string text, CancellationToken cancellationToken = default)
+    {
+        var response = await _httpClient.PostAsJsonAsync("/ai/summarize-text", new { text }, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<SummaryResponseDto>(JsonOptions, cancellationToken);
+        return result ?? new SummaryResponseDto { Summary = string.Empty };
     }
 
     public async Task<QuizGenerationResponseDto> GenerateQuizAsync(string content, string difficulty, CancellationToken cancellationToken = default)

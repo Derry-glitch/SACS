@@ -40,14 +40,7 @@ class QuickActionsWidget extends StatelessWidget {
                 title: 'AI Insights',
                 subtitle: 'Study tips',
                 color: AppTheme.accent,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('AI study planning coming soon!'),
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
-                },
+                onTap: () => context.push('/ai-dashboard'),
               ),
             ),
           ],
