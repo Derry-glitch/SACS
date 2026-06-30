@@ -160,6 +160,15 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> verifyStudentId(String matricNumber) async {
+    try {
+      final response = await _dio.get('/api/Students/verify/$matricNumber');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   Failure _handleDioError(DioException error) {
     if (error.response != null) {
       final data = error.response?.data;

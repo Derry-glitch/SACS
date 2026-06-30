@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/event_provider.dart';
 import '../core/theme/app_theme.dart';
 
@@ -9,43 +10,73 @@ class QuickActionsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _buildActionCard(
-            context: context,
-            icon: Icons.refresh_rounded,
-            title: 'Refresh Data',
-            subtitle: 'Sync with API',
-            color: AppTheme.primaryLight,
-            onTap: () {
-              context.read<EventProvider>().fetchEvents();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Syncing data with server...'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionCard(
+                context: context,
+                icon: Icons.refresh_rounded,
+                title: 'Refresh Data',
+                subtitle: 'Sync with API',
+                color: AppTheme.primaryLight,
+                onTap: () {
+                  context.read<EventProvider>().fetchEvents();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Syncing data with server...'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildActionCard(
+                context: context,
+                icon: Icons.auto_awesome,
+                title: 'AI Insights',
+                subtitle: 'Study tips',
+                color: AppTheme.accent,
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('AI study planning coming soon!'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildActionCard(
-            context: context,
-            icon: Icons.auto_awesome,
-            title: 'AI Insights',
-            subtitle: 'Study tips',
-            color: AppTheme.accent,
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('AI study planning coming soon!'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-          ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionCard(
+                context: context,
+                icon: Icons.qr_code_rounded,
+                title: 'Student ID',
+                subtitle: 'Digital Pass',
+                color: AppTheme.success,
+                onTap: () => context.push('/student-id'),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildActionCard(
+                context: context,
+                icon: Icons.verified_user_rounded,
+                title: 'Verify ID',
+                subtitle: 'Invigilator Portal',
+                color: AppTheme.primaryLight,
+                onTap: () => context.push('/verify-id'),
+              ),
+            ),
+          ],
         ),
       ],
     );

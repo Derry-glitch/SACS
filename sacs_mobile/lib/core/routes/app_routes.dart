@@ -4,6 +4,8 @@ import '../../screens/register_screen.dart';
 import '../../screens/dashboard_screen.dart';
 import '../../screens/event_detail_screen.dart';
 import '../../screens/event_form_screen.dart';
+import '../../screens/student_id_screen.dart';
+import '../../screens/id_verification_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/event_model.dart';
 
@@ -60,6 +62,14 @@ class AppRouter {
         builder: (context, state) => EventFormScreen(
           event: state.extra as EventModel?,
         ),
+      ),
+      GoRoute(
+        path: '/student-id',
+        builder: (context, state) => const StudentIdScreen(),
+      ),
+      GoRoute(
+        path: '/verify-id',
+        builder: (context, state) => const IdVerificationScreen(),
       ),
     ],
   );
