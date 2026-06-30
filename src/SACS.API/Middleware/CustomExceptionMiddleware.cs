@@ -45,6 +45,14 @@ public class CustomExceptionMiddleware
     {
         context.Response.ContentType = "application/json";
         
+        // Ensure CORS headers are present in case the CORS middleware was bypassed or failed
+        if (!context.Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
+        {
+            context.Response.Headers["Access-Control-Allow-Origin"] = "*";
+            context.Response.Headers["Access-Control-Allow-Methods"] = "*";
+            context.Response.Headers["Access-Control-Allow-Headers"] = "*";
+        }
+        
         var statusCode = exception switch
         {
             ValidationException => HttpStatusCode.BadRequest,

@@ -139,7 +139,7 @@ class ApiService {
       final data = error.response?.data;
       String? message;
       if (data is Map) {
-        message = data['message'] ?? data['title'] ?? data['errors']?.toString();
+        message = data['message'] ?? data['title'] ?? data['errors']?.toString() ?? data['Detail'];
       }
       return ServerFailure(message ?? 'Server error ${error.response?.statusCode}');
     }
@@ -147,6 +147,9 @@ class ApiService {
         error.type == DioExceptionType.receiveTimeout) {
       return NetworkFailure('Network connection timeout');
     }
-    return NetworkFailure('No internet connection');
+    if (error.type == DioExceptionType.connectionError) {
+      return NetworkFailure('Failed to connect to the server. Please check if the backend is running.');
+    }
+    return NetworkFailure('No internet connection or server unreachable: ${error.message}');
   }
 }

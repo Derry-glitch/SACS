@@ -173,15 +173,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "SACS API v1"));
 }
-
-// Global Exception Handler Middleware
-app.UseMiddleware<CustomExceptionMiddleware>();
-
 app.UseHttpsRedirection();
 
 app.UseRouting();
 
 app.UseCors("AllowAll");
+
+// Global Exception Handler Middleware
+app.UseMiddleware<CustomExceptionMiddleware>();
 
 app.UseRateLimiter();
 
