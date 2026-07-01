@@ -71,6 +71,32 @@ class QuickActionsWidget extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionCard(
+                context: context,
+                icon: Icons.co_present_rounded,
+                title: 'Attendance',
+                subtitle: 'Check In',
+                color: AppTheme.accent,
+                onTap: () => context.push('/attendance'),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildActionCard(
+                context: context,
+                icon: Icons.history_edu_rounded,
+                title: 'History',
+                subtitle: 'View Logs',
+                color: AppTheme.success,
+                onTap: () => context.push('/attendance-history'),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

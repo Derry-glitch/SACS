@@ -210,6 +210,24 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> checkInAttendance(String code) async {
+    try {
+      final response = await _dio.post('/api/Attendance/check-in', data: {'code': code});
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getAttendanceHistory(int studentId) async {
+    try {
+      final response = await _dio.get('/api/Attendance/history/$studentId');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   Failure _handleDioError(DioException error) {
     if (error.response != null) {
       final data = error.response?.data;

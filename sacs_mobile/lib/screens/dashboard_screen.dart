@@ -9,6 +9,7 @@ import '../widgets/user_profile_section.dart';
 import '../widgets/upcoming_deadlines_widget.dart';
 import '../widgets/calendar_preview_widget.dart';
 import '../widgets/quick_actions_widget.dart';
+import '../services/api_service.dart';
 import '../core/theme/app_theme.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -19,13 +20,46 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  double? _attendancePercentage;
+  bool _loadingAttendance = false;
+
   @override
   void initState() {
     super.initState();
     // Fetch events after the widget tree is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EventProvider>().fetchEvents();
+      _fetchAttendance();
     });
+  }
+
+  Future<void> _fetchAttendance() async {
+    final authState = context.read<AuthProvider>();
+    final studentId = authState.user?.id;
+    if (studentId == null) return;
+
+    if (mounted) {
+      setState(() {
+        _loadingAttendance = true;
+      });
+    }
+
+    try {
+      final apiService = ApiService();
+      final data = await apiService.getAttendanceHistory(studentId);
+      if (mounted) {
+        setState(() {
+          _attendancePercentage = (data['attendancePercentage'] as num?)?.toDouble();
+          _loadingAttendance = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadingAttendance = false;
+        });
+      }
+    }
   }
 
   @override
@@ -53,7 +87,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         child: SafeArea(
           child: RefreshIndicator(
-            onRefresh: () => context.read<EventProvider>().fetchEvents(),
+            onRefresh: () => Future.wait([
+              context.read<EventProvider>().fetchEvents(),
+              _fetchAttendance(),
+            ]),
             color: AppTheme.primaryLight,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -84,7 +121,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                       IconButton(
-                        onPressed: () => context.read<EventProvider>().fetchEvents(),
+                        onPressed: () {
+                          context.read<EventProvider>().fetchEvents();
+                          _fetchAttendance();
+                        },
                         icon: const Icon(Icons.sync_rounded, color: AppTheme.primaryLight),
                         tooltip: 'Sync Data',
                       ),
@@ -95,6 +135,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   // Student Welcome Card
                   if (currentUser != null) ...[
                     StudentWelcomeCard(user: currentUser),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Attendance Card Display
+                  if (_attendancePercentage != null) ...[
+                    _buildAttendanceCard(_attendancePercentage!),
                     const SizedBox(height: 20),
                   ],
 
@@ -137,6 +183,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAttendanceCard(double percentage) {
+    final isGood = percentage >= 75.0;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.bgDarkSecondary,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.06),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: (isGood ? AppTheme.success : AppTheme.error).withOpacity(0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isGood ? Icons.done_all_rounded : Icons.warning_amber_rounded,
+              color: isGood ? AppTheme.success : AppTheme.error,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Average Attendance',
+                  style: GoogleFonts.outfit(
+                    color: AppTheme.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: percentage / 100.0,
+                    backgroundColor: Colors.white10,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isGood ? AppTheme.success : AppTheme.error,
+                    ),
+                    minHeight: 6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${percentage.toStringAsFixed(0)}%',
+                style: GoogleFonts.outfit(
+                  color: isGood ? AppTheme.success : AppTheme.error,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                isGood ? 'Good' : 'Low',
+                style: GoogleFonts.inter(
+                  color: AppTheme.textSecondary,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

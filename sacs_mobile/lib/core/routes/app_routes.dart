@@ -10,6 +10,8 @@ import '../../screens/ai_dashboard_screen.dart';
 import '../../screens/note_summarizer_screen.dart';
 import '../../screens/quiz_generator_screen.dart';
 import '../../screens/study_planner_screen.dart';
+import '../../screens/attendance_screen.dart';
+import '../../screens/attendance_history_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/event_model.dart';
 
@@ -90,6 +92,14 @@ class AppRouter {
       GoRoute(
         path: '/study-planner',
         builder: (context, state) => const StudyPlannerScreen(),
+      ),
+      GoRoute(
+        path: '/attendance',
+        builder: (context, state) => const AttendanceScreen(),
+      ),
+      GoRoute(
+        path: '/attendance-history',
+        builder: (context, state) => const AttendanceHistoryScreen(),
       ),
     ],
   );
