@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import '../../screens/login_screen.dart';
 import '../../screens/register_screen.dart';
+import '../../screens/splash_screen.dart';
 import '../../screens/dashboard_screen.dart';
 import '../../screens/event_detail_screen.dart';
 import '../../screens/event_form_screen.dart';
@@ -35,9 +36,13 @@ class AppRouter {
   AppRouter(this.authProvider);
 
   late final GoRouter router = GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/splash',
     refreshListenable: authProvider,
     redirect: (context, state) {
+      if (state.matchedLocation == '/splash') {
+        return null;
+      }
+
       final isLoggedIn = authProvider.isAuthenticated;
       final isLoggingIn = state.matchedLocation == '/login' ||
           state.matchedLocation == '/register';
@@ -56,6 +61,10 @@ class AppRouter {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),

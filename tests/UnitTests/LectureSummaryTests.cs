@@ -74,6 +74,7 @@ public class LectureSummaryTests
         }
 
         public Task<DeadlineExtractionResponseDto> ExtractDeadlinesAsync(string text, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<SummaryResponseDto> SummarizeTextAsync(string text, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<QuizGenerationResponseDto> GenerateQuizAsync(string content, string difficulty, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<StudyPlanResponseDto> GenerateStudyPlanAsync(StudyPlanRequestDto request, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }

@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/loading_widget.dart';
+import '../widgets/empty_state_widget.dart';
+import '../widgets/retry_widget.dart';
 import '../core/theme/app_theme.dart';
 
 class NotificationScreen extends StatefulWidget {
@@ -117,44 +120,20 @@ class _NotificationScreenState extends State<NotificationScreen> {
         ),
         child: SafeArea(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: AppTheme.accent))
+              ? const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: LoadingSkeletonList(itemCount: 4, cardHeight: 80.0),
+                )
               : _errorMessage != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 48),
-                            const SizedBox(height: 16),
-                            Text(
-                              _errorMessage!,
-                              style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 14),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _fetchNotifications,
-                              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
-                              child: const Text('Retry'),
-                            )
-                          ],
-                        ),
-                      ),
+                  ? RetryWidget(
+                      errorMessage: _errorMessage!,
+                      onRetry: _fetchNotifications,
                     )
                   : _notifications.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.notifications_off_rounded, color: AppTheme.textSecondary.withOpacity(0.2), size: 64),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Your inbox is clear.',
-                                style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 14),
-                              ),
-                            ],
-                          ),
+                      ? const EmptyStateWidget(
+                          title: 'Inbox Clear',
+                          description: 'You have no unread notifications or announcements.',
+                          icon: Icons.notifications_off_rounded,
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.all(24.0),

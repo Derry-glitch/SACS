@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../services/api_service.dart';
+import '../widgets/loading_widget.dart';
+import '../widgets/empty_state_widget.dart';
+import '../widgets/retry_widget.dart';
 import '../core/theme/app_theme.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
@@ -72,44 +75,20 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         ),
         child: SafeArea(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryLight))
+              ? const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: LoadingSkeletonList(itemCount: 4, cardHeight: 90.0),
+                )
               : _errorMessage != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 48),
-                            const SizedBox(height: 16),
-                            Text(
-                              _errorMessage!,
-                              style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 14),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _fetchAnnouncements,
-                              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryLight),
-                              child: const Text('Retry'),
-                            )
-                          ],
-                        ),
-                      ),
+                  ? RetryWidget(
+                      errorMessage: _errorMessage!,
+                      onRetry: _fetchAnnouncements,
                     )
                   : _announcements.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.campaign_outlined, color: AppTheme.textSecondary.withOpacity(0.2), size: 64),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No active announcements.',
-                                style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 14),
-                              ),
-                            ],
-                          ),
+                      ? const EmptyStateWidget(
+                          title: 'No Announcements Yet',
+                          description: 'Keep an eye out for updates from SACS Academy.',
+                          icon: Icons.campaign_rounded,
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.all(24.0),

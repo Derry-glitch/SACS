@@ -70,6 +70,7 @@ public class StudyPlanTests
 
         public Task<DeadlineExtractionResponseDto> ExtractDeadlinesAsync(string text, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<SummaryResponseDto> SummarizeLectureNotesAsync(Stream fileStream, string fileName, string contentType, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<SummaryResponseDto> SummarizeTextAsync(string text, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<QuizGenerationResponseDto> GenerateQuizAsync(string content, string difficulty, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 

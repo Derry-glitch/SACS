@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/loading_widget.dart';
+import '../widgets/empty_state_widget.dart';
+import '../widgets/retry_widget.dart';
 import '../core/theme/app_theme.dart';
 
 class AttendanceHistoryScreen extends StatefulWidget {
@@ -86,30 +89,14 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         ),
         child: SafeArea(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: AppTheme.accent))
+              ? const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: LoadingSkeletonList(itemCount: 4, cardHeight: 80.0),
+                )
               : _errorMessage != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 48),
-                            const SizedBox(height: 16),
-                            Text(
-                              _errorMessage!,
-                              style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 14),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _fetchHistory,
-                              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
-                              child: const Text('Retry'),
-                            )
-                          ],
-                        ),
-                      ),
+                  ? RetryWidget(
+                      errorMessage: _errorMessage!,
+                      onRetry: _fetchHistory,
                     )
                   : SingleChildScrollView(
                       padding: const EdgeInsets.all(24.0),
@@ -130,25 +117,11 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          if (_records.isEmpty)
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: AppTheme.bgDarkSecondary,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.white.withOpacity(0.04)),
-                              ),
-                              child: Column(
-                                children: [
-                                  Icon(Icons.history_toggle_off_rounded, color: AppTheme.textSecondary.withOpacity(0.3), size: 48),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'No attendance records found.',
-                                    style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 13),
-                                  ),
-                                ],
-                              ),
+                           if (_records.isEmpty)
+                            const EmptyStateWidget(
+                              title: 'No Check-in Records',
+                              description: 'You haven\'t signed into any attendance sessions yet.',
+                              icon: Icons.history_toggle_off_rounded,
                             )
                           else
                             ListView.builder(

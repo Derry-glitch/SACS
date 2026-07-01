@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../services/biometric_service.dart';
 import '../services/storage_service.dart';
+import '../providers/theme_provider.dart';
 import '../core/theme/app_theme.dart';
 
 class BiometricSettingsScreen extends StatefulWidget {
@@ -334,6 +336,58 @@ class _BiometricSettingsScreenState extends State<BiometricSettingsScreen> {
                       value: _pinEnabled,
                       onChanged: _togglePin,
                       activeColor: AppTheme.accent,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.bgDarkSecondary,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withOpacity(0.04)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryLight.withOpacity(0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.brightness_4_rounded, color: AppTheme.primaryLight, size: 24),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Dark Mode',
+                            style: GoogleFonts.outfit(
+                              color: AppTheme.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Enable SACS premium dark styling.',
+                            style: GoogleFonts.inter(
+                              color: AppTheme.textSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: context.watch<ThemeProvider>().isDarkMode,
+                      onChanged: (val) {
+                        context.read<ThemeProvider>().toggleTheme(val);
+                      },
+                      activeColor: AppTheme.primaryLight,
                     ),
                   ],
                 ),

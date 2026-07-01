@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'core/routes/app_routes.dart';
 import 'providers/auth_provider.dart';
 import 'providers/event_provider.dart';
+import 'providers/theme_provider.dart';
 import 'services/api_service.dart';
 import 'services/storage_service.dart';
 
@@ -28,6 +29,9 @@ void main() {
             apiService: apiService,
           ),
         ),
+        ChangeNotifierProvider(
+          create: (_) => ThemeProvider(),
+        ),
       ],
       child: const SacsApp(),
     ),
@@ -47,17 +51,19 @@ class _SacsAppState extends State<SacsApp> {
   @override
   void initState() {
     super.initState();
-    // Initialize the router with the authProvider
     _appRouter = AppRouter(context.read<AuthProvider>());
   }
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+
     return MaterialApp.router(
       title: 'SACS Mobile',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark, // Default to a premium dark mode
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
       routerConfig: _appRouter.router,
     );
   }
