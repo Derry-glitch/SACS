@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../core/theme/app_theme.dart';
@@ -51,6 +52,13 @@ class UserProfileSection extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            IconButton(
+              onPressed: () {
+                context.push('/biometric-settings');
+              },
+              icon: const Icon(Icons.security_rounded, color: AppTheme.primaryLight),
+              tooltip: 'Security Settings',
             ),
             IconButton(
               onPressed: () {

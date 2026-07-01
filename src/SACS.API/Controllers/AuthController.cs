@@ -42,6 +42,13 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("refresh-token")]
+    public async Task<ActionResult<AuthResponseDto>> RefreshToken([FromBody] RefreshTokenCommand command)
+    {
+        var result = await _sender.Send(command);
+        return Ok(result);
+    }
+
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] LogoutCommand command)
     {

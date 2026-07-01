@@ -9,6 +9,7 @@ import '../widgets/user_profile_section.dart';
 import '../widgets/upcoming_deadlines_widget.dart';
 import '../widgets/calendar_preview_widget.dart';
 import '../widgets/quick_actions_widget.dart';
+import '../widgets/offline_banner_widget.dart';
 import '../services/api_service.dart';
 import '../core/theme/app_theme.dart';
 
@@ -106,9 +107,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         child: SafeArea(
-          child: RefreshIndicator(
-            onRefresh: () => Future.wait([
-              context.read<EventProvider>().fetchEvents(),
+          child: Column(
+            children: [
+              const OfflineBannerWidget(),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => Future.wait([
+                    context.read<EventProvider>().fetchEvents(),
               _fetchAttendance(),
               _fetchNotifications(),
             ]),
@@ -239,6 +244,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     isLoading: eventState.isLoading,
                   ),
                 ],
+              ),
               ),
             ),
           ),

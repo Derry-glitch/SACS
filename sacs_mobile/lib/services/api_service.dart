@@ -29,7 +29,7 @@ class ApiService {
                 // Request token refresh
                 final dioRefresh = Dio(BaseOptions(baseUrl: AppConstants.baseUrl));
                 final response = await dioRefresh.post(
-                  '/api/Auth/refresh',
+                  '/api/Auth/refresh-token',
                   data: {'refreshToken': refreshToken},
                 );
 
@@ -128,8 +128,13 @@ class ApiService {
     try {
       final response = await _dio.get('/api/Events/all');
       final list = response.data as List<dynamic>;
+      await _storageService.saveCache('events', list);
       return list.map((item) => EventModel.fromJson(item as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
+      final cached = await _storageService.getCache('events');
+      if (cached != null && cached is List) {
+        return cached.map((item) => EventModel.fromJson(item as Map<String, dynamic>)).toList();
+      }
       throw _handleDioError(e);
     }
   }
@@ -222,8 +227,14 @@ class ApiService {
   Future<Map<String, dynamic>> getAttendanceHistory(int studentId) async {
     try {
       final response = await _dio.get('/api/Attendance/history/$studentId');
-      return response.data as Map<String, dynamic>;
+      final data = response.data as Map<String, dynamic>;
+      await _storageService.saveCache('attendance_history', data);
+      return data;
     } on DioException catch (e) {
+      final cached = await _storageService.getCache('attendance_history');
+      if (cached != null && cached is Map<String, dynamic>) {
+        return cached;
+      }
       throw _handleDioError(e);
     }
   }
@@ -231,8 +242,14 @@ class ApiService {
   Future<List<dynamic>> getAnnouncements() async {
     try {
       final response = await _dio.get('/api/Announcements/all');
-      return response.data as List<dynamic>;
+      final list = response.data as List<dynamic>;
+      await _storageService.saveCache('announcements', list);
+      return list;
     } on DioException catch (e) {
+      final cached = await _storageService.getCache('announcements');
+      if (cached != null && cached is List) {
+        return cached;
+      }
       throw _handleDioError(e);
     }
   }
@@ -249,8 +266,14 @@ class ApiService {
   Future<Map<String, dynamic>> getUserNotifications(int userId) async {
     try {
       final response = await _dio.get('/api/Notifications/user/$userId');
-      return response.data as Map<String, dynamic>;
+      final data = response.data as Map<String, dynamic>;
+      await _storageService.saveCache('notifications', data);
+      return data;
     } on DioException catch (e) {
+      final cached = await _storageService.getCache('notifications');
+      if (cached != null && cached is Map<String, dynamic>) {
+        return cached;
+      }
       throw _handleDioError(e);
     }
   }

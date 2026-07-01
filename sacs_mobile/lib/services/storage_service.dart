@@ -47,4 +47,46 @@ class StorageService {
     final token = await getAccessToken();
     return token != null;
   }
+
+  // --- Offline Cache Support ---
+  Future<void> saveCache(String key, dynamic data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('cache_$key', jsonEncode(data));
+  }
+
+  Future<dynamic> getCache(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString('cache_$key');
+    if (jsonStr != null) {
+      try {
+        return jsonDecode(jsonStr);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  Future<void> clearCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys().where((k) => k.startsWith('cache_')).toList();
+    for (final key in keys) {
+      await prefs.remove(key);
+    }
+  }
+
+  // --- PIN Lock Support ---
+  static const String _securePinKey = 'sacs_user_pin';
+
+  Future<void> savePin(String pin) async {
+    await _secureStorage.write(key: _securePinKey, value: pin);
+  }
+
+  Future<String?> getPin() async {
+    return await _secureStorage.read(key: _securePinKey);
+  }
+
+  Future<void> clearPin() async {
+    await _secureStorage.delete(key: _securePinKey);
+  }
 }

@@ -20,10 +20,16 @@ import '../../screens/admin_dashboard_screen.dart';
 import '../../screens/attendance_session_screen.dart';
 import '../../screens/manage_students_screen.dart';
 import '../../screens/system_stats_screen.dart';
+import '../../screens/biometric_settings_screen.dart';
+import '../../screens/pin_lock_screen.dart';
+import 'package:flutter/material.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/event_model.dart';
+import '../../services/biometric_service.dart';
+import '../theme/app_theme.dart';
 
 class AppRouter {
+  static bool sessionUnlocked = false;
   final AuthProvider authProvider;
 
   AppRouter(this.authProvider);
@@ -38,6 +44,7 @@ class AppRouter {
 
       // If not logged in and not on login/register, go to login
       if (!isLoggedIn && !isLoggingIn) {
+        AppRouter.sessionUnlocked = false;
         return '/login';
       }
       
@@ -61,13 +68,72 @@ class AppRouter {
         path: '/',
         builder: (context, state) {
           final user = authProvider.user;
-          if (user?.role.toLowerCase() == 'lecturer') {
-            return const LecturerDashboardScreen();
-          } else if (user?.role.toLowerCase() == 'admin') {
-            return const AdminDashboardScreen();
-          } else {
-            return const DashboardScreen();
-          }
+          final bioService = BiometricService();
+
+          return FutureBuilder<bool>(
+            future: Future.wait([
+              bioService.isBiometricsEnabled(),
+              bioService.isPinEnabled(),
+            ]).then((results) => results[0] || results[1]),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(color: AppTheme.primaryLight),
+                  ),
+                );
+              }
+
+              final isSecurityActive = snapshot.data ?? false;
+              if (isSecurityActive && !AppRouter.sessionUnlocked) {
+                // If biometrics is enabled, try authenticating with biometrics first
+                return FutureBuilder<bool>(
+                  future: bioService.isBiometricsEnabled().then((enabled) async {
+                    if (enabled) {
+                      return await bioService.authenticate('Unlock SACS Secure Portal');
+                    }
+                    return false;
+                  }),
+                  builder: (context, bioSnapshot) {
+                    if (bioSnapshot.connectionState == ConnectionState.waiting) {
+                      return const Scaffold(
+                        body: Center(
+                          child: CircularProgressIndicator(color: AppTheme.primaryLight),
+                        ),
+                      );
+                    }
+
+                    final bioSuccess = bioSnapshot.data ?? false;
+                    if (bioSuccess) {
+                      AppRouter.sessionUnlocked = true;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        (context as Element).markNeedsBuild();
+                      });
+                    }
+
+                    // Fallback to PinLockScreen if PIN is enabled or biometrics failed/dismissed
+                    return PinLockScreen(
+                      onSuccess: () {
+                        AppRouter.sessionUnlocked = true;
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          (context as Element).markNeedsBuild();
+                        });
+                      },
+                    );
+                  },
+                );
+              }
+
+              // Normal flow when unlocked
+              if (user?.role.toLowerCase() == 'lecturer') {
+                return const LecturerDashboardScreen();
+              } else if (user?.role.toLowerCase() == 'admin') {
+                return const AdminDashboardScreen();
+              } else {
+                return const DashboardScreen();
+              }
+            },
+          );
         },
       ),
       GoRoute(
@@ -152,6 +218,17 @@ class AppRouter {
       GoRoute(
         path: '/system-stats',
         builder: (context, state) => const SystemStatsScreen(),
+      ),
+      GoRoute(
+        path: '/biometric-settings',
+        builder: (context, state) => const BiometricSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/pin-lock',
+        builder: (context, state) {
+          final callback = state.extra as VoidCallback? ?? () => context.go('/');
+          return PinLockScreen(onSuccess: callback);
+        },
       ),
     ],
   );
