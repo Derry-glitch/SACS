@@ -97,6 +97,32 @@ class QuickActionsWidget extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionCard(
+                context: context,
+                icon: Icons.campaign_rounded,
+                title: 'Announcements',
+                subtitle: 'Latest updates',
+                color: AppTheme.primaryLight,
+                onTap: () => context.push('/announcements'),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildActionCard(
+                context: context,
+                icon: Icons.notifications_active_rounded,
+                title: 'Alerts Log',
+                subtitle: 'All notices',
+                color: AppTheme.accent,
+                onTap: () => context.push('/notifications'),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

@@ -12,6 +12,9 @@ import '../../screens/quiz_generator_screen.dart';
 import '../../screens/study_planner_screen.dart';
 import '../../screens/attendance_screen.dart';
 import '../../screens/attendance_history_screen.dart';
+import '../../screens/announcements_screen.dart';
+import '../../screens/notification_screen.dart';
+import '../../screens/announcement_detail_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/event_model.dart';
 
@@ -100,6 +103,21 @@ class AppRouter {
       GoRoute(
         path: '/attendance-history',
         builder: (context, state) => const AttendanceHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/announcements',
+        builder: (context, state) => const AnnouncementsScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationScreen(),
+      ),
+      GoRoute(
+        path: '/announcement-detail',
+        builder: (context, state) {
+          final id = state.extra as int;
+          return AnnouncementDetailScreen(announcementId: id);
+        },
       ),
     ],
   );

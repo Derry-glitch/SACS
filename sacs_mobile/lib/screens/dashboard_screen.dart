@@ -22,6 +22,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   double? _attendancePercentage;
   bool _loadingAttendance = false;
+  int _unreadNotificationsCount = 0;
 
   @override
   void initState() {
@@ -30,6 +31,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EventProvider>().fetchEvents();
       _fetchAttendance();
+      _fetchNotifications();
     });
   }
 
@@ -62,6 +64,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Future<void> _fetchNotifications() async {
+    final authState = context.read<AuthProvider>();
+    final studentId = authState.user?.id;
+    if (studentId == null) return;
+
+    try {
+      final apiService = ApiService();
+      final data = await apiService.getUserNotifications(studentId);
+      if (mounted) {
+        setState(() {
+          _unreadNotificationsCount = (data['unreadCount'] as num?)?.toInt() ?? 0;
+        });
+      }
+    } catch (e) {
+      // Ignored
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = context.watch<AuthProvider>();
@@ -90,6 +110,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onRefresh: () => Future.wait([
               context.read<EventProvider>().fetchEvents(),
               _fetchAttendance(),
+              _fetchNotifications(),
             ]),
             color: AppTheme.primaryLight,
             child: SingleChildScrollView(
@@ -120,13 +141,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ],
                       ),
-                      IconButton(
-                        onPressed: () {
-                          context.read<EventProvider>().fetchEvents();
-                          _fetchAttendance();
-                        },
-                        icon: const Icon(Icons.sync_rounded, color: AppTheme.primaryLight),
-                        tooltip: 'Sync Data',
+                      Row(
+                        children: [
+                          Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.notifications_none_rounded, color: AppTheme.primaryLight, size: 28),
+                                onPressed: () => context.push('/notifications').then((_) => _fetchNotifications()),
+                                tooltip: 'Notifications',
+                              ),
+                              if (_unreadNotificationsCount > 0)
+                                Positioned(
+                                  right: 6,
+                                  top: 6,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: AppTheme.error,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    child: Text(
+                                      '$_unreadNotificationsCount',
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              context.read<EventProvider>().fetchEvents();
+                              _fetchAttendance();
+                              _fetchNotifications();
+                            },
+                            icon: const Icon(Icons.sync_rounded, color: AppTheme.primaryLight),
+                            tooltip: 'Sync Data',
+                          ),
+                        ],
                       ),
                     ],
                   ),

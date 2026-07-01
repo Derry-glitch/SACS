@@ -228,6 +228,42 @@ class ApiService {
     }
   }
 
+  Future<List<dynamic>> getAnnouncements() async {
+    try {
+      final response = await _dio.get('/api/Announcements/all');
+      return response.data as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getAnnouncementDetails(int id) async {
+    try {
+      final response = await _dio.get('/api/Announcements/$id');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getUserNotifications(int userId) async {
+    try {
+      final response = await _dio.get('/api/Notifications/user/$userId');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> markNotificationAsRead(int id) async {
+    try {
+      final response = await _dio.put('/api/Notifications/mark-read/$id');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   Failure _handleDioError(DioException error) {
     if (error.response != null) {
       final data = error.response?.data;
