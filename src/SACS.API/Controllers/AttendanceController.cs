@@ -17,7 +17,7 @@ public class AttendanceController : ApiControllerBase
     private readonly ApplicationDbContext _context;
 
     // Static thread-safe dictionary to store active attendance sessions
-    private static readonly ConcurrentDictionary<string, AttendanceSession> ActiveSessions = new();
+    public static readonly ConcurrentDictionary<string, AttendanceSession> ActiveSessions = new();
 
     public AttendanceController(ApplicationDbContext context)
     {

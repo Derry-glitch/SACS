@@ -15,6 +15,11 @@ import '../../screens/attendance_history_screen.dart';
 import '../../screens/announcements_screen.dart';
 import '../../screens/notification_screen.dart';
 import '../../screens/announcement_detail_screen.dart';
+import '../../screens/lecturer_dashboard_screen.dart';
+import '../../screens/admin_dashboard_screen.dart';
+import '../../screens/attendance_session_screen.dart';
+import '../../screens/manage_students_screen.dart';
+import '../../screens/system_stats_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/event_model.dart';
 
@@ -54,7 +59,16 @@ class AppRouter {
       ),
       GoRoute(
         path: '/',
-        builder: (context, state) => const DashboardScreen(),
+        builder: (context, state) {
+          final user = authProvider.user;
+          if (user?.role.toLowerCase() == 'lecturer') {
+            return const LecturerDashboardScreen();
+          } else if (user?.role.toLowerCase() == 'admin') {
+            return const AdminDashboardScreen();
+          } else {
+            return const DashboardScreen();
+          }
+        },
       ),
       GoRoute(
         path: '/event-details',
@@ -118,6 +132,26 @@ class AppRouter {
           final id = state.extra as int;
           return AnnouncementDetailScreen(announcementId: id);
         },
+      ),
+      GoRoute(
+        path: '/lecturer-dashboard',
+        builder: (context, state) => const LecturerDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/admin-dashboard',
+        builder: (context, state) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/attendance-session',
+        builder: (context, state) => const AttendanceSessionScreen(),
+      ),
+      GoRoute(
+        path: '/manage-students',
+        builder: (context, state) => const ManageStudentsScreen(),
+      ),
+      GoRoute(
+        path: '/system-stats',
+        builder: (context, state) => const SystemStatsScreen(),
       ),
     ],
   );

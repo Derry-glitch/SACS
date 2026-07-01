@@ -264,6 +264,118 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> lecturerCreateAnnouncement(Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.post('/api/Lecturer/create-announcement', data: data);
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> lecturerCreateAttendanceSession(int offeringId, int duration) async {
+    try {
+      final response = await _dio.post('/api/Lecturer/create-attendance-session', data: {
+        'courseOfferingId': offeringId,
+        'durationInMinutes': duration,
+      });
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<List<dynamic>> lecturerGetCourseAttendance(int courseId) async {
+    try {
+      final response = await _dio.get('/api/Lecturer/course-attendance/$courseId');
+      return response.data as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<List<dynamic>> lecturerGetCourseStudents(int courseId) async {
+    try {
+      final response = await _dio.get('/api/Lecturer/students/$courseId');
+      return response.data as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> lecturerVerifyStudentId(String matricNo) async {
+    try {
+      final response = await _dio.post('/api/Lecturer/verify-student-id', data: {
+        'matriculationNumber': matricNo,
+      });
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<List<dynamic>> adminGetAllStudents() async {
+    try {
+      final response = await _dio.get('/api/Admin/all-students');
+      return response.data as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<List<dynamic>> adminGetAllLecturers() async {
+    try {
+      final response = await _dio.get('/api/Admin/all-lecturers');
+      return response.data as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> adminCreateDepartment(String name, String code) async {
+    try {
+      final response = await _dio.post('/api/Admin/create-department', data: {
+        'name': name,
+        'code': code,
+      });
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> adminCreateCourse(int deptId, String code, String title, int credits) async {
+    try {
+      final response = await _dio.post('/api/Admin/create-course', data: {
+        'departmentId': deptId,
+        'code': code,
+        'title': title,
+        'creditUnits': credits,
+      });
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> adminRemoveStudent(int id) async {
+    try {
+      final response = await _dio.delete('/api/Admin/remove-student/$id');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> adminGetSystemStats() async {
+    try {
+      final response = await _dio.get('/api/Admin/system-stats');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   Failure _handleDioError(DioException error) {
     if (error.response != null) {
       final data = error.response?.data;
